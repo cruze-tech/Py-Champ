@@ -1,102 +1,96 @@
 const gameLevels = [
-    {
-        id: 1,
-        title: "Hello Python",
-        concepts: "print, variables",
-        scene: "scene_level_1",
-        dialogue: "Welcome to Python! Let's start with a simple greeting.",
-        instructions: "Write a Python program that prints 'Hello, World!' to the console.",
-        startingCode: "# Write your code here\n",
-        hints: [
-            "Use the print() function to display text",
-            "Put your text in quotes: print('Hello, World!')",
-            "Make sure the text matches exactly: 'Hello, World!'"
-        ],
-        solution: "print('Hello, World!')",
-        expectedOutput: "Hello, World!",
-        successCondition: (output) => {
-            const cleanOutput = output.trim().replace(/\r\n/g, '\n');
-            return cleanOutput === "Hello, World!";
-        }
-    },
-    {
-        id: 2,
-        title: "Variables & Math",
-        concepts: "variables, arithmetic",
-        scene: "scene_level_2",
-        dialogue: "Great job! Now let's learn about variables and math.",
-        instructions: "Create two variables 'a' and 'b' with values 5 and 3, then print their sum.",
-        startingCode: "# Create variables and calculate\n",
-        hints: [
-            "Create variables: a = 5 and b = 3",
-            "Add them together: a + b",
-            "Print the result: print(a + b)"
-        ],
-        solution: "a = 5\nb = 3\nprint(a + b)",
-        expectedOutput: "8",
-        successCondition: (output) => {
-            const cleanOutput = output.trim().replace(/\r\n/g, '\n');
-            return cleanOutput === "8";
-        }
-    },
-    {
-        id: 3,
-        title: "User Input",
-        concepts: "input, strings",
-        scene: "scene_level_3",
-        dialogue: "Now let's make our programs interactive!",
-        instructions: "Ask the user for their name and greet them personally. The greeting should start with 'Hello,'",
-        startingCode: "# Get user input and greet them\n",
-        hints: [
-            "Use input() to get user input",
-            "Store the result in a variable: name = input('What is your name? ')",
-            "Use f-strings or concatenation to create the greeting: print(f'Hello, {name}!')"
-        ],
-        solution: "name = input('What is your name? ')\nprint(f'Hello, {name}!')",
-        expectedOutput: null, // Variable output based on input
-        successCondition: (output) => {
-            const cleanOutput = output.trim().replace(/\r\n/g, '\n');
-            return cleanOutput.includes("Hello,") && cleanOutput.length > 6;
-        }
-    },
-    {
-        id: 4,
-        title: "Conditions",
-        concepts: "if statements, comparison",
-        scene: "scene_level_4",
-        dialogue: "Time to make decisions in your code!",
-        instructions: "Write a program that checks if a number is positive, negative, or zero. Use the variable 'number = 5' and print 'positive', 'negative', or 'zero'.",
-        startingCode: "number = 5\n# Write your if-elif-else logic here\n",
-        hints: [
-            "Use if, elif, and else statements",
-            "Compare with 0: if number > 0:",
-            "Don't forget the colons and indentation"
-        ],
-        solution: "number = 5\nif number > 0:\n    print('positive')\nelif number < 0:\n    print('negative')\nelse:\n    print('zero')",
-        expectedOutput: "positive",
-        successCondition: (output) => {
-            const cleanOutput = output.trim().replace(/\r\n/g, '\n');
-            return cleanOutput === "positive";
-        }
-    },
-    {
-        id: 5,
-        title: "Loops",
-        concepts: "for loops, range",
-        scene: "scene_level_5",
-        dialogue: "Let's learn about repetition with loops!",
-        instructions: "Use a for loop to print numbers from 1 to 5, each on a new line.",
-        startingCode: "# Write a for loop here\n",
-        hints: [
-            "Use range(1, 6) to get numbers 1 to 5",
-            "for i in range(1, 6):",
-            "Print each number: print(i)"
-        ],
-        solution: "for i in range(1, 6):\n    print(i)",
-        expectedOutput: "1\n2\n3\n4\n5",
-        successCondition: (output) => {
-            const cleanOutput = output.trim().replace(/\r\n/g, '\n');
-            return cleanOutput === "1\n2\n3\n4\n5";
-        }
-    }
+  {
+    id: 1,
+    title: "Welcome to Python! 🎉",
+    concepts: "print(), strings",
+    dialogue: "Hey there, future programmer! Let's start your Python journey by greeting the world!",
+    instructions: "Use the print() function to display: Hello, Python World!",
+    startingCode: "# Write your first line of Python code!\n# Use print() to display a message\n# Text must be inside quotes like: print(\"Hello\")\n\n",
+    expectedOutput: "Hello, Python World!",
+    hints: [
+      "In Python, we use print() to show text on the screen",
+      "Text must be surrounded by quotes: print(\"text\")",
+      "The exact code should be: print(\"Hello, Python World!\")"
+    ],
+    scene: "scene_level_1"
+  },
+  {
+    id: 2,
+    title: "Math Magic! 🧮",
+    concepts: "arithmetic, expressions",
+    dialogue: "Great job! Now let's do some math. Python is like a super calculator!",
+    instructions: "Calculate and print the result of: 15 + 25 * 2",
+    startingCode: "# Python follows math rules (PEMDAS)\n# Calculate: 15 + 25 * 2\n",
+    expectedOutput: "65",
+    hints: [
+      "Remember: multiplication happens before addition",
+      "25 * 2 = 50, then 15 + 50 = 65",
+      "Use print() to display your calculation"
+    ],
+    scene: "scene_math"
+  },
+  {
+    id: 3,
+    title: "Variable Adventure! 📦",
+    concepts: "variables, assignment",
+    dialogue: "Time to learn about variables - they're like labeled boxes that store information!",
+    instructions: "Create a variable called 'age' with value 16, then print it.",
+    startingCode: "# Variables store information\n# Create a variable and print it\n",
+    expectedOutput: "16",
+    hints: [
+      "Use: variable_name = value",
+      "Create: age = 16",
+      "Then use print(age) to display it"
+    ],
+    scene: "scene_variables"
+  },
+  {
+    id: 4,
+    title: "String Wizard! ✨",
+    concepts: "strings, concatenation",
+    dialogue: "Let's play with text! Strings are sequences of characters, and we can combine them!",
+    instructions: "Create two variables: name = 'Alex' and greeting = 'Hello'. Print them together with a space between.",
+    startingCode: "# String concatenation means joining text together\n# Try combining strings with +\n",
+    expectedOutput: "Hello Alex",
+    hints: [
+      "Create both variables first",
+      "Use + to join strings: greeting + ' ' + name",
+      "Don't forget the space: ' '"
+    ],
+    scene: "scene_strings"
+  },
+  {
+    id: 5,
+    title: "Input Master! 🎯",
+    concepts: "input(), user interaction",
+    dialogue: "Now let's make your program interactive! We'll ask the user for their name.",
+    instructions: "Ask for the user's name using input() and print 'Welcome, [name]!'",
+    startingCode: "# input() gets text from the user\n# Store it in a variable and use it\n",
+    expectedOutput: "Welcome, Python!",
+    hints: [
+      "Use: name = input('What is your name? ')",
+      "Then print: 'Welcome, ' + name + '!'",
+      "For testing, just type 'Python' when asked"
+    ],
+    scene: "scene_input",
+    hasUserInput: true,
+    testInput: "Python"
+  },
+  {
+    id: 6,
+    title: "Decision Maker! 🤔",
+    concepts: "if statements, conditions",
+    dialogue: "Time to make decisions! Let's teach Python to think with if statements.",
+    instructions: "Create a variable 'score' with value 85. If score is greater than 80, print 'Great job!'",
+    startingCode: "# if statements let your program make decisions\n# Format: if condition:\n#     do something\n",
+    expectedOutput: "Great job!",
+    hints: [
+      "Create: score = 85",
+      "Use: if score > 80:",
+      "Don't forget the colon and indentation!"
+    ],
+    scene: "scene_decisions"
+  }
 ];
+
+window.gameLevels = gameLevels;

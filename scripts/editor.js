@@ -1,65 +1,127 @@
 const editorManager = (() => {
-    let editor;
+  console.log("Editor Manager initializing");
+  
+  let editor;
 
-    function init(containerId, initialCode) {
-        const container = document.getElementById(containerId);
-        if (!container) {
-            console.error(`❌ Editor container '${containerId}' not found`);
-            return;
-        }
+  function init(containerId, initialCode) {
+    console.log(`Initializing editor in ${containerId}`);
+    
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error(`Container not found: ${containerId}`);
+      return;
+    }
+
+    try {
+      // Clear container
+      container.innerHTML = '';
+      
+      // Create editor
+      if (window.CodeMirror) {
+        // Mobile-friendly CodeMirror configuration
+        const isMobile = window.innerWidth <= 768;
         
-        // Clear any existing content
-        container.innerHTML = '';
+        editor = CodeMirror(container, {
+          value: initialCode || '',
+          mode: 'python',
+          theme: 'default',
+          lineNumbers: true,
+          indentUnit: 4,
+          lineWrapping: true,
+          autofocus: !isMobile, // Don't auto-focus on mobile to prevent keyboard popup
+          extraKeys: {
+            'Ctrl-Enter': () => {
+              document.getElementById('run-btn')?.click();
+            },
+            'Tab': function(cm) {
+              // Insert 4 spaces instead of tab for Python
+              cm.replaceSelection('    ');
+            }
+          },
+          // Mobile-specific options
+          inputStyle: isMobile ? 'contenteditable' : 'textarea',
+          dragDrop: !isMobile,
+          cursorScrollMargin: isMobile ? 50 : 0,
+          viewportMargin: isMobile ? 10 : Infinity
+        });
         
-        try {
-            // Create CodeMirror editor
-            editor = CodeMirror(container, {
-                value: initialCode || "",
-                mode: "python",
-                theme: "material-darker",
-                lineNumbers: true,
-                indentUnit: 4,
-                lineWrapping: true,
-                autofocus: true,
-                extraKeys: {
-                    "Ctrl-Enter": function() {
-                        const runBtn = document.getElementById('run-btn');
-                        if (runBtn) runBtn.click();
-                    }
-                }
-            });
-            
-            // Ensure proper sizing with a slight delay
+        // Mobile-specific event handlers
+        if (isMobile) {
+          editor.on('focus', () => {
+            // Scroll editor into view on mobile when focused
             setTimeout(() => {
-                editor.setSize("100%", "100%");
-                editor.refresh();
-            }, 100);
-            
-            console.log('✅ CodeMirror editor initialized successfully');
-            
-        } catch (error) {
-            console.error('❌ Failed to initialize CodeMirror:', error);
-            
-            // Fallback to textarea
-            container.innerHTML = `
-                <textarea 
-                    id="fallback-editor"
-                    style="width:100%;height:100%;font-family:'Courier New',monospace;padding:15px;background:#263238;color:#fff;border:none;outline:none;resize:none;font-size:14px;line-height:1.5;"
-                    placeholder="Write your Python code here..."
-                >${initialCode || ''}</textarea>
-            `;
+              container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+          });
         }
+        
+        // Force refresh after a short delay
+        setTimeout(() => {
+          if (editor) {
+            editor.refresh();
+            console.log("Editor refreshed");
+          }
+        }, 100);
+        
+        // Responsive refresh on window resize
+        window.addEventListener('resize', () => {
+          if (editor) {
+            setTimeout(() => editor.refresh(), 100);
+          }
+        });
+        
+      } else {
+        console.error("CodeMirror not loaded");
+        // Fallback textarea with mobile-friendly attributes
+        container.innerHTML = `
+          <textarea 
+            style="width:100%;height:100%;font-family:monospace;font-size:14px;padding:10px;border:1px solid #374151;border-radius:8px;background:#0f172a;color:#e5e7eb;"
+            placeholder="Write your Python code here..."
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+          >${initialCode || ''}</textarea>
+        `;
+      }
+    } catch (error) {
+      console.error("Error initializing editor:", error);
+      container.innerHTML = `
+        <textarea 
+          style="width:100%;height:100%;font-family:monospace;font-size:14px;padding:10px;border:1px solid #374151;border-radius:8px;background:#0f172a;color:#e5e7eb;"
+          placeholder="Write your Python code here..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        >${initialCode || ''}</textarea>
+      `;
     }
+  }
 
-    function getCode() {
-        return editor ? editor.getValue() : '';
+  function getCode() {
+    if (editor) {
+      return editor.getValue();
+    } else {
+      const textarea = document.querySelector('#editor-container textarea');
+      return textarea ? textarea.value : '';
     }
+  }
 
-    function setCode(code) {
-        if (editor) {
-            editor.setValue(code);
-        }
+  function setCode(code) {
+    if (editor) {
+      editor.setValue(code || '');
+    } else {
+      const textarea = document.querySelector('#editor-container textarea');
+      if (textarea) {
+        textarea.value = code || '';
+      }
     }
+  }
 
-    return { init, getCode, setCode };
+  console.log("Editor Manager ready");
+  
+  return { init, getCode, setCode };
 })();
+
+window.editorManager = editorManager;

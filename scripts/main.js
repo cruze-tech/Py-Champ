@@ -1,279 +1,227 @@
 const gameManager = (() => {
-    let levelStartTime = 0;
-    let hintsUsed = 0;
-    let currentLevel;
+  console.log("🚀 Game Manager initializing");
+  
+  let levelStartTime = 0;
+  let hintsUsed = 0;
+  let currentLevel = null;
 
-    let playerProgress = {
-        unlockedLevels: [1],
-        levelsCompleted: {},
-        totalPlayTime: 0,
-        hintsUsed: 0,
+  let playerProgress = {
+    unlockedLevels: [1],
+    levelsCompleted: {},
+    totalPlayTime: 0,
+    hintsUsed: 0,
+  };
+
+  function saveProgress() {
+    try {
+      localStorage.setItem('pychamp_progress', JSON.stringify(playerProgress));
+      console.log("✅ Progress saved");
+    } catch(e) {
+      console.warn("⚠️ Failed to save progress:", e);
+    }
+  }
+
+  function loadProgress() {
+    try {
+      const saved = localStorage.getItem('pychamp_progress');
+      if (saved) {
+        playerProgress = JSON.parse(saved);
+        console.log("✅ Progress loaded");
+      }
+    } catch(e) {
+      console.warn("⚠️ Failed to load progress:", e);
+    }
+  }
+
+  function resetProgress() {
+    if (!confirm('Are you sure you want to reset all progress?')) return;
+    
+    playerProgress = {
+      unlockedLevels: [1],
+      levelsCompleted: {},
+      totalPlayTime: 0,
+      hintsUsed: 0,
     };
+    
+    saveProgress();
+    ui.renderLevelMap(playerProgress);
+    ui.updateOverallProgress();
+    
+    alert("Progress has been reset");
+  }
 
-    // Debounce function to prevent rapid clicks
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+  const showLevelMap = function() {
+    console.log("🗺️ Showing level map");
+    ui.renderLevelMap(playerProgress);
+    ui.updateOverallProgress();
+    ui.showView('level-map-container');
+  };
+
+  const startLevel = function(levelId) {
+    console.log(`🎮 Starting level ${levelId}`);
+    
+    const level = window.gameLevels.find(l => l.id === levelId);
+    if (!level) {
+      console.error(`❌ Level ${levelId} not found`);
+      return;
     }
+    
+    currentLevel = level;
+    levelStartTime = Date.now();
+    hintsUsed = 0;
+    
+    ui.loadLevelUI(level);
+    ui.showView('gameplay-container');
+  };
 
-    function saveProgress() {
-        try {
-            localStorage.setItem('pychamp_progress', JSON.stringify(playerProgress));
-        } catch (e) {
-            console.warn('Failed to save progress:', e);
+  function handleLevelSuccess() {
+    console.log(`🏆 Level ${currentLevel.id} completed!`);
+    
+    const timeElapsed = Date.now() - levelStartTime;
+    const minutes = Math.round(timeElapsed / 60000 * 10) / 10;
+    
+    // Calculate stars (3 for best, 1 for minimum)
+    let stars = 3;
+    if (hintsUsed > 2) stars = 1;
+    else if (hintsUsed > 0) stars = 2;
+    else if (minutes > 10) stars = Math.max(2, stars);
+    else if (minutes > 5) stars = Math.max(2, stars);
+    
+    // Store completion data
+    playerProgress.levelsCompleted[currentLevel.id] = {
+      stars: stars,
+      completedAt: Date.now(),
+      timeMinutes: minutes,
+      hintsUsed: hintsUsed
+    };
+    
+    // Unlock next level
+    const nextLevelId = currentLevel.id + 1;
+    const nextLevelExists = window.gameLevels.some(l => l.id === nextLevelId);
+    
+    if (nextLevelExists && !playerProgress.unlockedLevels.includes(nextLevelId)) {
+      playerProgress.unlockedLevels.push(nextLevelId);
+      console.log(`🔓 Level ${nextLevelId} unlocked`);
+    }
+    
+    // Update total stats
+    playerProgress.totalPlayTime += timeElapsed;
+    
+    // Save progress
+    saveProgress();
+    
+    // Show victory modal with encouragement
+    setTimeout(() => {
+      ui.showVictoryModal(stars, currentLevel, () => {
+        if (nextLevelExists) {
+          startLevel(nextLevelId);
+        } else {
+          // All levels completed!
+          alert("🎉 Congratulations! You've completed all levels! You're now a Python champion! 🏆");
+          showLevelMap();
         }
+      });
+    }, 500);
+  }
+
+  function incrementHints() {
+    hintsUsed++;
+    playerProgress.hintsUsed++;
+    console.log(`💡 Hint used (total: ${hintsUsed} for this level, ${playerProgress.hintsUsed} overall)`);
+    
+    // Update hint button text to show usage
+    const hintBtn = document.getElementById('hint-btn');
+    if (hintBtn) {
+      if (hintsUsed === 1) {
+        hintBtn.textContent = `💡 Hint (${hintsUsed} used)`;
+      } else {
+        hintBtn.textContent = `💡 Hints (${hintsUsed} used)`;
+      }
     }
+    
+    saveProgress();
+  }
 
-    function loadProgress() {
-        try {
-            const saved = localStorage.getItem('pychamp_progress');
-            console.log('📊 Loading progress from localStorage:', saved);
-            
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                playerProgress = { ...playerProgress, ...parsed };
-                console.log('✅ Progress loaded successfully:', playerProgress);
-            } else {
-                console.log('ℹ️ No saved progress found, starting fresh');
-                // Ensure Level 1 is always unlocked
-                playerProgress.unlockedLevels = [1];
-                saveProgress();
-            }
-        } catch (e) {
-            console.error('❌ Failed to load progress:', e);
-            // Reset to default safe state
-            playerProgress = {
-                unlockedLevels: [1],
-                levelsCompleted: {},
-                totalPlayTime: 0,
-                hintsUsed: 0,
-            };
-            saveProgress();
-        }
-        
-        // Debug log final state
-        console.log('🎯 Final progress state:', {
-            unlockedLevels: playerProgress.unlockedLevels,
-            completedLevels: Object.keys(playerProgress.levelsCompleted),
-            totalCompleted: Object.keys(playerProgress.levelsCompleted).length
-        });
-    }
-
-    function resetProgress() {
-        if (confirm('Are you sure you want to reset all progress? This cannot be undone!')) {
-            localStorage.removeItem('pychamp_progress');
-            playerProgress = {
-                unlockedLevels: [1],
-                levelsCompleted: {},
-                totalPlayTime: 0,
-                hintsUsed: 0,
-            };
-            saveProgress();
-            ui.updateOverallProgress();
-            showLevelMap();
-        }
-    }
-
-    const showLevelMap = debounce(() => {
-        ui.renderLevelMap(playerProgress);
-        ui.showView('level-map-container');
-    }, 100);
-
-    const startLevel = debounce((levelId) => {
-        const level = gameLevels.find((l) => l.id === levelId);
-        if (!level) {
-            console.error(`❌ Level ${levelId} not found`);
-            return;
-        }
-        
-        // 🔧 FIX: More permissive level access check
-        const isCompleted = !!playerProgress.levelsCompleted[levelId];
-        const isUnlocked = playerProgress.unlockedLevels.includes(levelId);
-        const isAccessible = isUnlocked || isCompleted;
-        
-        console.log(`🎮 Starting Level ${levelId}: unlocked=${isUnlocked}, completed=${isCompleted}, accessible=${isAccessible}`);
-        
-        if (!isAccessible) {
-            console.warn(`⚠️ Level ${levelId} is not accessible yet`);
-            alert(`Level ${levelId} is locked!\nComplete the previous levels first.`);
-            return;
-        }
-        
-        currentLevel = level;
-        hintsUsed = 0;
-        levelStartTime = Date.now();
-        
-        console.log(`✅ Successfully starting Level ${levelId}: ${level.title}`);
-        
-        // Use immediate transition for better responsiveness
-        ui.loadLevelUI(currentLevel);
-        ui.showView('gameplay-container');
-    }, 100); // Reduced debounce time for better responsiveness
-
-    function handleLevelSuccess() {
-        console.log("🎉 Level success triggered for Level", currentLevel.id);
-        const completionTime = Date.now() - levelStartTime;
-        const timeMinutes = Math.round((completionTime / 60000) * 10) / 10;
-        let stars = 3;
-
-        // Calculate stars based on performance
-        if (hintsUsed > 2) stars = 1;
-        else if (hintsUsed > 0) stars = 2;
-        else if (timeMinutes > 15) stars = 2;
-        else if (timeMinutes > 10) stars = Math.max(2, stars);
-
-        // Store completion data
-        playerProgress.levelsCompleted[currentLevel.id] = {
-            stars,
-            completedAt: Date.now(),
-            timeMinutes,
-            hintsUsed,
-        };
-
-        playerProgress.totalPlayTime += completionTime;
-
-        // 🔧 FIX: Always unlock next level
-        const nextLevelId = currentLevel.id + 1;
-        const nextLevelExists = gameLevels.some((l) => l.id === nextLevelId);
-
-        if (nextLevelExists && !playerProgress.unlockedLevels.includes(nextLevelId)) {
-            playerProgress.unlockedLevels.push(nextLevelId);
-            console.log(`🔓 Level ${nextLevelId} unlocked!`);
-        }
-
-        // 🔧 FIX: Debug logging
-        console.log('📊 Updated progress:', {
-            completed: Object.keys(playerProgress.levelsCompleted),
-            unlocked: playerProgress.unlockedLevels,
-            nextLevelExists,
-            nextLevelId
-        });
-
-        saveProgress();
-        
-        // Show victory modal
-        setTimeout(() => {
-            ui.showVictoryModal(
-                stars, 
-                currentLevel, 
-                nextLevelExists ? () => startLevel(nextLevelId) : showLevelMap
-            );
-        }, 500);
-    }
-
-    function incrementHints() {
-        hintsUsed++;
-        playerProgress.hintsUsed++;
-        saveProgress();
-    }
-
-    function attachEventListeners() {
-        console.log("Attaching game manager event listeners");
-        
-        // Use immediate binding with better error handling
-        const attachButtonListener = (buttonId, callback, description) => {
-            const button = document.getElementById(buttonId);
-            if (button) {
-                console.log(`Found ${description} button`);
-                // Remove any existing listeners
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-                
-                newButton.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log(`${description} button clicked`);
-                    
-                    // Add visual feedback
-                    newButton.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        newButton.style.transform = '';
-                    }, 150);
-                    
-                    callback();
-                });
-            } else {
-                console.warn(`${description} button not found!`);
-            }
-        };
-        
-        // Attach listeners with retry mechanism
-        const tryAttachListeners = () => {
-            attachButtonListener('start-game-btn', showLevelMap, 'Start game');
-            attachButtonListener('how-to-play-btn', () => ui.showView('how-to-play'), 'How to play');
-            attachButtonListener('back-to-map-btn', showLevelMap, 'Back to map');
-            attachButtonListener('reset-progress-btn', resetProgress, 'Reset progress');
-        };
-        
-        // Try immediately and with delay
-        tryAttachListeners();
-        setTimeout(tryAttachListeners, 200);
-        
-        // Global keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const visibleModal = document.querySelector('.modal-overlay.visible');
-                if (visibleModal) {
-                    const modalId = visibleModal.id;
-                    ui.hideModal(modalId);
-                }
-            }
-            
-            // Ctrl+Enter shortcut for running code
-            if (e.key === 'Enter' && e.ctrlKey) {
-                const runBtn = document.getElementById('run-btn');
-                if (runBtn && !runBtn.disabled) {
-                    runBtn.click();
-                }
-            }
-        });
-    }
-
-    function init() {
-        console.log("Initializing game manager");
-        
-        // Load progress first
-        loadProgress();
-        
-        // Show initial view immediately
+  function attachEventListeners() {
+    console.log("🔄 Attaching event listeners");
+    
+    // Splash screen buttons
+    ui.attachButtonListener(document.getElementById('start-game-btn'), showLevelMap);
+    ui.attachButtonListener(document.getElementById('how-to-play-btn'), () => ui.showView('how-to-play'));
+    ui.attachButtonListener(document.getElementById('reset-progress-btn'), resetProgress);
+    
+    // Back to menu buttons
+    ui.attachButtonListener(document.getElementById('back-to-menu-btn'), () => ui.showView('splash-screen'));
+    ui.attachButtonListener(document.getElementById('level-map-to-menu-btn'), () => ui.showView('splash-screen'));
+    
+    // Handle all back-to-menu class buttons
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('back-to-menu')) {
+        console.log("Back to menu clicked (generic handler)");
         ui.showView('splash-screen');
-        
-        // Update progress display
-        ui.updateOverallProgress();
-        
-        // Attach event listeners after a short delay to ensure DOM is ready
-        setTimeout(attachEventListeners, 50);
-        
-        console.log("Game manager initialized");
-    }
+      }
+    });
+    
+    // Handle escape key to close modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('.modal:not(.hidden)');
+        modals.forEach(modal => {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        });
+      }
+    });
+    
+    console.log("✅ Event listeners attached");
+  }
 
-    return {
-        init,
-        startLevel,
-        showLevelMap,
-        handleLevelSuccess,
-        incrementHints,
-        resetProgress,  // Add this line - it was missing!
-        playerProgress,
-        get currentLevel() { return currentLevel; }
-    };
+  function init() {
+    console.log("🔄 Initializing Game Manager");
+    
+    // Hide loading screen
+    const loading = document.getElementById('initial-loading');
+    if (loading) {
+      loading.style.display = 'none';
+    }
+    
+    // Load saved progress
+    loadProgress();
+    
+    // Setup event handlers
+    attachEventListeners();
+    
+    // Show the splash screen initially
+    ui.showView('splash-screen');
+    
+    console.log("✅ Game Manager initialized");
+  }
+
+  return {
+    init,
+    startLevel,
+    showLevelMap,
+    handleLevelSuccess,
+    incrementHints,
+    resetProgress,
+    playerProgress
+  };
 })();
 
-// Initialize immediately
-console.log("Setting up game manager");
 window.gameManager = gameManager;
 
-// Wait for DOM to be ready, then initialize
+// Initialize the game manager when the DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', gameManager.init);
+  document.addEventListener('DOMContentLoaded', gameManager.init);
 } else {
-    // DOM is already ready
-    setTimeout(gameManager.init, 0);
+  gameManager.init();
 }
+
+// Force initialize after a short delay as fallback
+setTimeout(() => {
+  const loading = document.getElementById('initial-loading');
+  if (loading && loading.style.display !== 'none') {
+    console.log("⚠️ Forcing initialization after timeout");
+    gameManager.init();
+  }
+}, 2000);

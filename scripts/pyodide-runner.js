@@ -1,120 +1,130 @@
 const pyodideRunner = (() => {
-    let pyodide;
-    let _inputResolve = null;
-    let isInitialized = false;
-    let isInitializing = false;
+  console.log("Python Runner initializing");
+  
+  let pyodide;
+  let isInitialized = false;
+  let isInitializing = false;
+  let pendingPromise = null;
 
-    async function init() {
-        if (isInitialized || isInitializing) return;
-        isInitializing = true;
+  async function loadScript(src) {
+    console.log(`Loading script: ${src}`);
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => {
+        console.log(`Script loaded: ${src}`);
+        resolve();
+      };
+      script.onerror = (err) => {
+        console.error(`Failed to load script: ${src}`, err);
+        reject(new Error(`Failed to load ${src}`));
+      };
+      document.head.appendChild(script);
+    });
+  }
 
-        try {
-            console.log("Loading Pyodide in background...");
-            
-            pyodide = await loadPyodide({
-                indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/"
-            });
-            
-            console.log("Pyodide loaded successfully in background");
-            
-            // Setup input handling
-            pyodide.globals.set('js_input_handler', (prompt = '') => {
-                return new Promise((resolve) => {
-                    _inputResolve = resolve;
-                    ui.showInputModal(prompt);
-                });
-            });
-            
-            // Override Python's input function
-            pyodide.runPython(`
-import js
-import builtins
-
-def custom_input(prompt=""):
-    return js.js_input_handler(prompt)
-
-builtins.input = custom_input
-            `);
-            
-            console.log("Pyodide Ready in background.");
-            isInitialized = true;
-            
-        } catch (error) {
-            console.error("Failed to initialize Pyodide:", error);
-        } finally {
-            isInitializing = false;
-        }
+  async function init() {
+    if (isInitialized || isInitializing) {
+      return pendingPromise;
     }
-
-    function provideInput(value) {
-        if(_inputResolve) {
-            _inputResolve(value);
-            _inputResolve = null;
-        }
-    }
-
-    async function run(code) {
-        // Show loading indicator while waiting for Pyodide
-        if (!isInitialized && !isInitializing) {
-            const consoleOutput = document.getElementById('console-output');
-            if (consoleOutput) {
-                consoleOutput.innerHTML = '<span class="log-info">Starting Python interpreter...</span>';
-            }
-            await init();
-        }
-
-        // Wait for initialization to complete with visual feedback
-        while (isInitializing) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
-
-        if (!isInitialized) {
-            return { output: '', error: 'Python interpreter failed to load' };
-        }
-
-        let output = '';
-        let error = '';
+    
+    isInitializing = true;
+    console.log("Initializing Python runtime");
+    
+    pendingPromise = (async () => {
+      try {
+        await loadScript('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
         
-        try {
-            // Capture stdout
-            pyodide.runPython(`
+        if (!window.loadPyodide) {
+          throw new Error("Pyodide failed to load correctly");
+        }
+        
+        console.log("Loading Pyodide...");
+        pyodide = await window.loadPyodide({
+          stdout: (text) => console.log("Python stdout:", text),
+          stderr: (text) => console.error("Python stderr:", text)
+        });
+        
+        console.log("Python runtime ready");
+        isInitialized = true;
+        
+        // Basic test
+        const testResult = await pyodide.runPythonAsync("1+1");
+        console.log("Python test:", testResult);
+        
+        return true;
+      } catch (err) {
+        console.error("Failed to initialize Python runtime:", err);
+        isInitializing = false;
+        return false;
+      }
+    })();
+    
+    const result = await pendingPromise;
+    isInitializing = false;
+    return result;
+  }
+
+  async function run(code, level = null) {
+    console.log("Running Python code");
+    
+    // Make sure Python is ready
+    if (!isInitialized && !isInitializing) {
+      await init();
+    } else if (isInitializing) {
+      await pendingPromise;
+    }
+    
+    if (!isInitialized || !pyodide) {
+      return {
+        output: "Python runtime not available. Please try again later.",
+        error: "Runtime initialization failed"
+      };
+    }
+    
+    try {
+      // Capture stdout
+      let output = '';
+      
+      // Handle input() function for interactive levels
+      if (level && level.hasUserInput) {
+        // Mock input function for testing
+        pyodide.runPython(`
 import sys
 import io
+sys.stdout = io.StringIO()
 
-# Create string buffer to capture output
-captured_output = io.StringIO()
-sys.stdout = captured_output
-            `);
-            
-            // Run user code
-            await pyodide.runPythonAsync(code);
-            
-            // Get captured output
-            output = pyodide.runPython(`
-sys.stdout = sys.__stdout__
-captured_output.getvalue()
-            `);
-            
-            // Reset stdout in case of error
-            pyodide.runPython(`sys.stdout = sys.__stdout__`);
-        } catch (e) {
-            error = e.message;
-            // Also reset stdout on error
-            try {
-                pyodide.runPython(`sys.stdout = sys.__stdout__`);
-            } catch (resetError) {
-                console.warn('Failed to reset stdout:', resetError);
-            }
-        }
-        
-        return { output: output.trim(), error };
+# Mock input function for testing
+def input(prompt=''):
+    print(prompt, end='')
+    return '${level.testInput || 'Python'}'
+        `);
+      } else {
+        // Override print to capture output
+        pyodide.runPython(`
+import sys
+import io
+sys.stdout = io.StringIO()
+        `);
+      }
+      
+      // Run user code
+      await pyodide.runPythonAsync(code);
+      
+      // Get captured output
+      output = pyodide.runPython("sys.stdout.getvalue()");
+      
+      return { output: output.trim(), error: '' };
+    } catch (error) {
+      console.error("Python execution error:", error);
+      return { output: '', error: error.message || String(error) };
     }
+  }
 
-    return { init, run, provideInput };
+  // Initialize in background after page loads
+  setTimeout(init, 1000);
+  
+  return { init, run };
 })();
 
-// Initialize Pyodide immediately when script loads
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("Starting Pyodide initialization on DOM load");
-    pyodideRunner.init();
-});
+window.pyodideRunner = pyodideRunner;
