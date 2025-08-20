@@ -67,9 +67,13 @@ body {
 }
 
 .view-container {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    min-height: 100vh;
     padding: 20px;
+}
+
+.view-container.hidden {
+    display: none !important;
 }
 
 /* --- Panels --- */
@@ -283,59 +287,65 @@ body {
 }
 
 /* --- Level Map --- */
+#level-map {
+    display: none;
+}
+
+#level-map:not(.hidden) {
+    display: block;
+}
+
 .level-map-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    padding: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+    min-height: 200px;
+}
+
+.level-map-grid:empty::before {
+    content: "Loading levels...";
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #94a3b8;
+    font-style: italic;
 }
 
 .level-card {
     background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 16px;
+    padding: 20px;
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.level-card:hover:not(.locked) {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-    border-color: rgba(96, 165, 250, 0.5);
 }
 
 .level-card h4 {
-    margin-bottom: 8px;
-    font-size: 1.1em;
+    margin: 0 0 10px 0;
     color: #f1f5f9;
+    font-size: 1.1rem;
 }
 
 .level-card .meta {
     color: #94a3b8;
-    font-size: 0.85em;
-    margin-bottom: 12px;
-    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
 }
 
 .level-card .actions {
+    margin-top: 15px;
+}
+
+.level-card .locked-text {
+    color: #6b7280;
+    font-style: italic;
+}
+
+.stars-display {
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.level-card.locked {
-    opacity: 0.4;
-    filter: grayscale(0.8);
-}
-
-.level-card.locked::before {
-    content: "🔒";
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 1.2em;
+    gap: 5px;
+    margin: 10px 0;
+    font-size: 18px;
 }
 
 /* --- Progress Bar --- */
@@ -453,6 +463,7 @@ body {
     padding: 15px;
     border-radius: 4px;
     font-size: 1.1rem;
+    line-height: 1.4;
 }
 
 .modal-actions {
@@ -862,4 +873,38 @@ body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
+}
+
+/* Add these new styles for solution display */
+
+.solution-container {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.solution-intro {
+  color: #fbbf24;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.solution-code {
+  background: rgba(15, 23, 42, 0.8);
+  border-left: 4px solid #3b82f6;
+  padding: 10px;
+  margin: 8px 0;
+  font-family: monospace;
+  white-space: pre;
+  color: #e5e7eb;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.solution-note {
+  color: #94a3b8;
+  font-style: italic;
+  margin-top: 8px;
+  font-size: 0.9em;
 }

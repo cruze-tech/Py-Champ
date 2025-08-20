@@ -35,12 +35,21 @@
     <!-- Splash screen -->
     <div id="splash-screen" class="view-container">
       <div class="splash-inner">
-        <h1 class="brand">PyChamp</h1>
-        <p class="tagline">Master Python through interactive challenges</p>
+        <div class="brand">PyChamp</div>
+        <div class="tagline">Learn Python Through Interactive Challenges!</div>
+        
+        <!-- Progress Display -->
+        <div class="overall-progress">
+          <div id="progress-text">0/6 levels completed (0%)</div>
+          <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        
         <div class="splash-buttons">
-          <button id="start-game-btn" class="btn btn-primary">Start Game</button>
-          <button id="how-to-play-btn" class="btn btn-secondary">How to Play</button>
-          <button id="reset-progress-btn" class="btn btn-warning">Reset Progress</button>
+          <button id="start-game-btn" class="btn btn-primary">🚀 Start Game</button>
+          <button id="how-to-play-btn" class="btn btn-secondary">❓ How to Play</button>
+          <button id="reset-progress-btn" class="btn btn-warning">🔄 Reset Progress</button>
         </div>
       </div>
     </div>
@@ -66,15 +75,18 @@
     </div>
 
     <!-- Level map -->
-    <div id="level-map-container" class="view-container hidden">
+    <div id="level-map" class="view-container hidden">
       <div class="panel">
         <div class="panel-header">
-          <h3>Select a Level</h3>
-          <div id="overall-progress" class="overall-progress"></div>
+          <h3>🗺️ Level Map</h3>
         </div>
-        <div id="level-map" class="panel-body"></div>
+        <div class="panel-body">
+          <div id="level-map-grid" class="level-map-grid">
+            <!-- Level cards will be inserted here -->
+          </div>
+        </div>
         <div class="panel-footer">
-          <button id="level-map-to-menu-btn" class="btn back-to-menu">Back to Menu</button>
+          <button id="level-map-to-menu-btn" class="btn btn-secondary">🏠 Back to Menu</button>
         </div>
       </div>
     </div>
@@ -104,7 +116,7 @@
           <div class="panel-header">
             <h3>Editor</h3>
             <div class="panel-actions">
-              <button id="hint-btn" class="btn btn-warning">💡 Hint</button>
+              <button id="hint-btn" class="btn btn-secondary">💡 Hint</button>
               <button id="run-btn" class="btn btn-primary">▶️ Run</button>
               <button id="prev-level-btn" class="btn">← Prev</button>
               <button id="next-level-btn" class="btn">Next →</button>
@@ -230,6 +242,61 @@
       console.log('Found hint button in DOM');
     } else {
       console.error('Hint button not found in DOM');
+    }
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, checking essential elements');
+    
+    // Check critical elements
+    const criticalElements = [
+      'start-game-btn', 'level-map-grid', 'hint-btn', 
+      'run-btn', 'console-output', 'editor-container'
+    ];
+    
+    criticalElements.forEach(id => {
+      const el = document.getElementById(id);
+      console.log(`Element ${id}: ${el ? 'Found ✅' : 'Missing ❌'}`);
+    });
+    
+    // Check global objects
+    const globalObjects = [
+      'ui', 'gameManager', 'editorManager', 'pyodideRunner', 'gameLevels'
+    ];
+    
+    globalObjects.forEach(obj => {
+      console.log(`Global ${obj}: ${window[obj] ? 'Available ✅' : 'Missing ❌'}`);
+    });
+    
+    // Add emergency event handlers if needed
+    const startGameBtn = document.getElementById('start-game-btn');
+    if (startGameBtn && !startGameBtn.onclick) {
+      console.log('Adding emergency handler to start game button');
+      startGameBtn.addEventListener('click', function() {
+        console.log('Emergency start game handler');
+        if (window.ui) {
+          window.ui.showView('level-map');
+        } else {
+          const splashScreen = document.getElementById('splash-screen');
+          const levelMap = document.getElementById('level-map');
+          if (splashScreen && levelMap) {
+            splashScreen.style.display = 'none';
+            levelMap.style.display = 'block';
+          }
+        }
+      });
+    }
+    
+    // Initialize game if not done
+    if (window.gameManager && !window.gameInitialized) {
+      console.log('Emergency game initialization');
+      window.gameInitialized = true;
+      try {
+        window.gameManager.loadProgress?.();
+      } catch (e) {
+        console.error('Failed to load progress:', e);
+      }
     }
   });
 </script>
