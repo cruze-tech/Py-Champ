@@ -1,285 +1,365 @@
 const gameManager = (() => {
-  console.log("GameManager initializing");
-
   let currentLevel = null;
   let playerProgress = {
-    unlockedLevels: [1], // Start with level 1 unlocked
+    unlockedLevels: [1],
     completedLevels: [],
-    levelScores: {}, // Store stars for each level
-    hintsUsed: 0,
-    totalPlayTime: 0
+    levelScores: {}, // stores best star rating per level
+    levelStats: {}, // stores detailed stats per level
+    totalPlayTime: 0,
+    gamesPlayed: 0
   };
   let levelStartTime = null;
-  let hintsUsed = 0; // Hints used for current level
+  let currentLevelHints = 0; // Hints for current session only
 
-  // Load progress from localStorage
+  const STORAGE_KEY = 'pychamp_progress';
+
+  function log(message) {
+    console.log(`GameManager: ${message}`);
+  }
+
   function loadProgress() {
     try {
-      const saved = localStorage.getItem('pychamp_progress');
+      const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const loadedProgress = JSON.parse(saved);
+        const savedData = JSON.parse(saved);
+        // Merge with default structure to handle version upgrades
         playerProgress = {
-          ...playerProgress,
-          ...loadedProgress
+          unlockedLevels: [1],
+          completedLevels: [],
+          levelScores: {},
+          levelStats: {},
+          totalPlayTime: 0,
+          gamesPlayed: 0,
+          ...savedData
         };
-        
-        // Ensure at least level 1 is unlocked
-        if (!playerProgress.unlockedLevels || playerProgress.unlockedLevels.length === 0) {
-          playerProgress.unlockedLevels = [1];
-        }
-        
-        console.log("✅ Progress loaded:", playerProgress);
+        log(`Progress loaded: ${playerProgress.completedLevels.length} levels completed`);
       } else {
-        console.log("No saved progress found, using defaults");
+        log('No saved progress found, starting fresh');
       }
     } catch (error) {
-      console.error("❌ Error loading progress:", error);
+      console.error("Error loading progress:", error);
+      // Reset to defaults on error
       playerProgress = {
         unlockedLevels: [1],
         completedLevels: [],
         levelScores: {},
-        hintsUsed: 0,
-        totalPlayTime: 0
+        levelStats: {},
+        totalPlayTime: 0,
+        gamesPlayed: 0
       };
     }
   }
 
-  // Save progress to localStorage
   function saveProgress() {
     try {
-      localStorage.setItem('pychamp_progress', JSON.stringify(playerProgress));
-      console.log("✅ Progress saved:", playerProgress);
+      const saveData = {
+        ...playerProgress,
+        lastSaved: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
+      log('Progress saved successfully');
     } catch (error) {
-      console.error("❌ Error saving progress:", error);
+      console.error("Error saving progress:", error);
     }
   }
 
-  // Get level by ID
+  function resetProgress() {
+    if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+      localStorage.removeItem(STORAGE_KEY);
+      playerProgress = {
+        unlockedLevels: [1],
+        completedLevels: [],
+        levelScores: {},
+        levelStats: {},
+        totalPlayTime: 0,
+        gamesPlayed: 0
+      };
+      currentLevel = null;
+      currentLevelHints = 0;
+      levelStartTime = null; // BUG FIX: Reset level start time
+      
+      log('Progress reset completed');
+      saveProgress();
+      
+      if (window.ui && window.ui.updateProgressDisplay) {
+        window.ui.updateProgressDisplay();
+        // BUG FIX: Also update level map after reset
+        if (window.ui.updateLevelMap) {
+          window.ui.updateLevelMap();
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
   function getLevelById(id) {
     return window.gameLevels?.find(level => level.id === parseInt(id));
   }
 
-  // Start a level
-  function startLevel(levelId) {
-    console.log(`🎮 Starting level: ${levelId}`);
-    
-    const levelData = getLevelById(levelId);
-    if (!levelData) {
-      console.error(`❌ Level ${levelId} not found!`);
-      return;
-    }
-
-    // Check if level is unlocked
-    if (!playerProgress.unlockedLevels.includes(levelId)) {
-      console.warn(`🔒 Level ${levelId} is locked!`);
-      alert(`Level ${levelId} is locked! Complete previous levels first.`);
-      return;
-    }
-
-    // Reset level-specific data
-    hintsUsed = 0;
-    currentLevel = levelData;
-    levelStartTime = Date.now();
-
-    // Show gameplay view and load level UI
-    if (window.ui) {
-      window.ui.showView('gameplay');
-      window.ui.loadLevelUI(levelData);
-    }
-
-    console.log(`✅ Level ${levelId} loaded successfully`);
+  function isLevelUnlocked(levelId) {
+    return playerProgress.unlockedLevels.includes(parseInt(levelId));
   }
 
-  // Handle level completion
+  function isLevelCompleted(levelId) {
+    return playerProgress.completedLevels.includes(parseInt(levelId));
+  }
+
+  function getLevelStars(levelId) {
+    return playerProgress.levelScores[parseInt(levelId)] || 0;
+  }
+
+  function getLevelStats(levelId) {
+    return playerProgress.levelStats[parseInt(levelId)] || {
+      attempts: 0,
+      bestTime: null,
+      totalHints: 0,
+      firstCompleted: null
+    };
+  }
+
+  function startLevel(levelId) {
+    log(`Starting level ${levelId}`);
+    
+    levelId = parseInt(levelId);
+    const levelData = getLevelById(levelId);
+    
+    if (!levelData) {
+      console.error(`Level ${levelId} not found!`);
+      return false;
+    }
+
+    if (!isLevelUnlocked(levelId)) {
+      console.warn(`Level ${levelId} is locked!`);
+      alert('This level is locked! Complete the previous levels first.');
+      return false;
+    }
+
+    // Reset level-specific counters
+    currentLevelHints = 0;
+    currentLevel = levelData;
+    levelStartTime = Date.now();
+    
+    // BUG FIX: Initialize level stats if they don't exist
+    if (!playerProgress.levelStats[levelId]) {
+      playerProgress.levelStats[levelId] = {
+        attempts: 0,
+        bestTime: null,
+        totalHints: 0,
+        firstCompleted: null
+      };
+    }
+    playerProgress.levelStats[levelId].attempts++;
+    playerProgress.gamesPlayed++;
+
+    // BUG FIX: Save progress after updating stats
+    saveProgress();
+
+    log(`Level ${levelId} started - Attempt #${playerProgress.levelStats[levelId].attempts}`);
+
+    // Show gameplay UI
+    if (window.ui && window.ui.showView) {
+      window.ui.showView('gameplay');
+      setTimeout(() => {
+        if (window.ui.loadLevelUI) {
+          window.ui.loadLevelUI(levelData);
+        }
+      }, 100);
+      return true;
+    } else {
+      console.error('UI module not available!');
+      return false;
+    }
+  }
+
+  function incrementHints() {
+    currentLevelHints++;
+    
+    if (currentLevel) {
+      const levelId = currentLevel.id;
+      // BUG FIX: Ensure level stats exist before updating
+      if (!playerProgress.levelStats[levelId]) {
+        playerProgress.levelStats[levelId] = {
+          attempts: 0,
+          bestTime: null,
+          totalHints: 0,
+          firstCompleted: null
+        };
+      }
+      playerProgress.levelStats[levelId].totalHints++;
+    }
+    
+    log(`Hints used in current session: ${currentLevelHints}`);
+    saveProgress();
+    return currentLevelHints;
+  }
+
   function handleLevelSuccess() {
-    if (!currentLevel) {
-      console.error("❌ No current level to complete!");
-      return;
+    if (!currentLevel || !levelStartTime) {
+      log('No current level for success handler');
+      return false;
     }
 
     const levelId = currentLevel.id;
     const completionTime = Date.now() - levelStartTime;
-    
-    console.log(`🎉 Level ${levelId} completed in ${completionTime}ms with ${hintsUsed} hints`);
+    const hintsUsed = currentLevelHints;
 
-    // Calculate stars (3 = no hints, 2 = 1-2 hints, 1 = 3+ hints)
-    let stars = 3;
-    if (hintsUsed >= 3) {
-      stars = 1;
-    } else if (hintsUsed >= 1) {
-      stars = 2;
-    }
+    // Calculate stars based on hints used
+    let stars = 3; // Perfect
+    if (hintsUsed >= 1 && hintsUsed < 3) stars = 2; // Good
+    if (hintsUsed >= 3) stars = 1; // Okay
 
-    // Update progress
+    log(`Level ${levelId} completed: ${stars} stars, ${hintsUsed} hints, ${Math.round(completionTime/1000)}s`);
+
+    // Update completion status
     if (!playerProgress.completedLevels.includes(levelId)) {
       playerProgress.completedLevels.push(levelId);
     }
 
-    // Update or set level score (keep best score)
-    const currentScore = playerProgress.levelScores[levelId] || 0;
-    if (stars > currentScore) {
-      playerProgress.levelScores[levelId] = stars;
+    // Update best score (keep highest star count)
+    const currentBest = playerProgress.levelScores[levelId] || 0;
+    playerProgress.levelScores[levelId] = Math.max(stars, currentBest);
+
+    // BUG FIX: Ensure stats object exists before accessing
+    if (!playerProgress.levelStats[levelId]) {
+      playerProgress.levelStats[levelId] = {
+        attempts: 0,
+        bestTime: null,
+        totalHints: 0,
+        firstCompleted: null
+      };
+    }
+
+    // Update level stats
+    const stats = playerProgress.levelStats[levelId];
+    if (!stats.firstCompleted) {
+      stats.firstCompleted = Date.now();
+    }
+    // BUG FIX: Only update best time if it's better or first completion
+    if (!stats.bestTime || completionTime < stats.bestTime) {
+      stats.bestTime = completionTime;
     }
 
     // Unlock next level
     const nextLevelId = levelId + 1;
-    if (nextLevelId <= window.gameLevels?.length && !playerProgress.unlockedLevels.includes(nextLevelId)) {
+    const maxLevels = window.gameLevels?.length || 6;
+    
+    if (nextLevelId <= maxLevels && !playerProgress.unlockedLevels.includes(nextLevelId)) {
       playerProgress.unlockedLevels.push(nextLevelId);
-      console.log(`🔓 Unlocked level ${nextLevelId}`);
+      log(`Unlocked level ${nextLevelId}`);
     }
 
-    // Update total play time
+    // Add completion time to total
     playerProgress.totalPlayTime += completionTime;
 
     // Save progress
     saveProgress();
 
     // Show victory modal
-    if (window.ui) {
+    if (window.ui && window.ui.showVictoryModal) {
+      const nextAction = () => {
+        if (nextLevelId <= maxLevels) {
+          // BUG FIX: Better UX - show option dialog instead of confirm
+          const userChoice = confirm('Ready for the next level?\n\nClick OK to continue to the next level\nClick Cancel to return to level map');
+          if (userChoice) {
+            startLevel(nextLevelId);
+          } else {
+            window.ui.showView('level-map');
+          }
+        } else {
+          // All levels completed!
+          alert('🎉 Congratulations! You\'ve completed all levels!\n\nYou are now a Python Champion!');
+          window.ui.showView('level-map');
+        }
+      };
+
+      // BUG FIX: Pass correct completion data
+      const completionData = {
+        hintsUsed,
+        completionTime,
+        isNewRecord: !stats.bestTime || completionTime <= stats.bestTime,
+        isFirstCompletion: stats.attempts === 1, // BUG FIX: Check if this is first attempt
+        levelId,
+        stars
+      };
+
       setTimeout(() => {
-        window.ui.showVictoryModal(stars, currentLevel, () => {
-          // After victory modal, show level map
-          showLevelMap();
-        });
+        window.ui.showVictoryModal(stars, currentLevel, nextAction, completionData);
       }, 500);
     }
 
-    console.log("✅ Progress updated:", playerProgress);
+    // BUG FIX: Reset current level data after completion
+    currentLevel = null;
+    levelStartTime = null;
+    currentLevelHints = 0;
+
+    return true;
   }
 
-  // Show level map
-  function showLevelMap() {
-    console.log("🗺️ Showing level map");
-    
-    if (window.ui) {
-      window.ui.showView('level-map');
-    }
-  }
-
-  // Increment hints used
-  function incrementHints() {
-    hintsUsed++;
-    playerProgress.hintsUsed++;
-    console.log(`💡 Hint used (level: ${hintsUsed}, total: ${playerProgress.hintsUsed})`);
-    
-    // Update hint button appearance
-    const hintBtn = document.getElementById('hint-btn');
-    if (hintBtn) {
-      if (hintsUsed >= 5) {
-        hintBtn.textContent = "💡 Show Solution";
-        hintBtn.title = "Click to see the solution";
-      } else {
-        hintBtn.textContent = `💡 Hint (${hintsUsed}/5 used)`;
-        hintBtn.title = `Click for another hint (${hintsUsed}/5)`;
-      }
-    }
-    
-    saveProgress();
-  }
-
-  // Reset all progress
-  function resetProgress() {
-    console.log("🔄 Resetting all progress");
-    
-    if (confirm("Are you sure you want to reset all progress? This cannot be undone!")) {
-      localStorage.removeItem('pychamp_progress');
-      playerProgress = {
-        unlockedLevels: [1],
-        completedLevels: [],
-        levelScores: {},
-        hintsUsed: 0,
-        totalPlayTime: 0
-      };
-      
-      currentLevel = null;
-      hintsUsed = 0;
-      
-      console.log("✅ Progress reset complete");
-      
-      // Update UI
-      if (window.ui) {
-        window.ui.showView('splash-screen');
-        window.ui.updateProgressDisplay();
-      }
-    }
-  }
-
-  // Calculate overall progress
   function calculateProgress() {
     const totalLevels = window.gameLevels?.length || 6;
     const completedCount = playerProgress.completedLevels.length;
+    const unlockedCount = playerProgress.unlockedLevels.length;
     const percentage = Math.round((completedCount / totalLevels) * 100);
     
+    // Calculate total stars earned
+    const totalStars = Object.values(playerProgress.levelScores).reduce((sum, stars) => sum + stars, 0);
+    const maxPossibleStars = totalLevels * 3;
+
     return {
       completed: completedCount,
       total: totalLevels,
-      percentage: percentage
+      unlocked: unlockedCount,
+      percentage: percentage,
+      totalStars,
+      maxPossibleStars,
+      totalPlayTime: Math.round(playerProgress.totalPlayTime / 1000), // in seconds
+      gamesPlayed: playerProgress.gamesPlayed
     };
   }
 
-  // Initialize the game manager
-  function init() {
-    console.log("🚀 Initializing GameManager");
-    loadProgress();
-    console.log("✅ GameManager ready");
+  function getDetailedStats() {
+    const progress = calculateProgress();
+    
+    return {
+      ...progress,
+      levelStats: { ...playerProgress.levelStats }, // BUG FIX: Return copy to prevent mutation
+      averageStars: progress.completed > 0 ? (progress.totalStars / progress.completed).toFixed(2) : 0,
+      averagePlayTime: playerProgress.gamesPlayed > 0 ? Math.round(playerProgress.totalPlayTime / playerProgress.gamesPlayed) : 0,
+      completionRate: progress.unlocked > 0 ? Math.round((progress.completed / progress.unlocked) * 100) : 0
+    };
   }
 
-  // Attach event listeners
-  function attachEventListeners() {
-    console.log("🔄 Attaching event listeners");
+  // BUG FIX: Add method to get current session info
+  function getCurrentSessionInfo() {
+    return {
+      currentLevel: currentLevel ? { ...currentLevel } : null,
+      hintsUsed: currentLevelHints,
+      sessionStartTime: levelStartTime,
+      sessionDuration: levelStartTime ? Date.now() - levelStartTime : 0
+    };
+  }
+
+  function init() {
+    log('Initializing Game Manager');
+    loadProgress();
     
-    // Use UI utility for button listeners
-    if (window.ui && window.ui.attachButtonListener) {
-      // Splash screen buttons
-      const startGameBtn = document.getElementById('start-game-btn');
-      if (startGameBtn) {
-        window.ui.attachButtonListener(startGameBtn, showLevelMap);
-      }
-      
-      const howToPlayBtn = document.getElementById('how-to-play-btn');
-      if (howToPlayBtn) {
-        window.ui.attachButtonListener(howToPlayBtn, () => window.ui.showView('how-to-play'));
-      }
-      
-      const resetProgressBtn = document.getElementById('reset-progress-btn');
-      if (resetProgressBtn) {
-        window.ui.attachButtonListener(resetProgressBtn, resetProgress);
-      }
-      
-      // Back to menu buttons
-      const backToMenuBtn = document.getElementById('back-to-menu-btn');
-      if (backToMenuBtn) {
-        window.ui.attachButtonListener(backToMenuBtn, () => window.ui.showView('splash-screen'));
-      }
-      
-      const levelMapToMenuBtn = document.getElementById('level-map-to-menu-btn');
-      if (levelMapToMenuBtn) {
-        window.ui.attachButtonListener(levelMapToMenuBtn, () => window.ui.showView('splash-screen'));
-      }
+    // BUG FIX: Validate loaded data
+    if (!Array.isArray(playerProgress.unlockedLevels) || playerProgress.unlockedLevels.length === 0) {
+      playerProgress.unlockedLevels = [1];
+    }
+    if (!Array.isArray(playerProgress.completedLevels)) {
+      playerProgress.completedLevels = [];
+    }
+    if (typeof playerProgress.levelScores !== 'object') {
+      playerProgress.levelScores = {};
+    }
+    if (typeof playerProgress.levelStats !== 'object') {
+      playerProgress.levelStats = {};
     }
     
-    // Handle generic back-to-menu class buttons
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('back-to-menu')) {
-        console.log("🏠 Back to menu clicked");
-        if (window.ui) {
-          window.ui.showView('splash-screen');
-        }
-      }
-    });
-    
-    // Handle ESC key to close modals
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        const modals = document.querySelectorAll('.modal:not(.hidden)');
-        modals.forEach(modal => {
-          modal.classList.add('hidden');
-          modal.style.display = 'none';
-        });
-      }
-    });
-    
-    console.log("✅ Event listeners attached");
+    log(`Game Manager initialized - ${playerProgress.completedLevels.length} levels completed`);
+    return true;
   }
 
   // Public API
@@ -287,127 +367,101 @@ const gameManager = (() => {
     init,
     startLevel,
     handleLevelSuccess,
-    showLevelMap,
     incrementHints,
     resetProgress,
     calculateProgress,
+    getDetailedStats,
+    getCurrentSessionInfo, // BUG FIX: Added session info method
     getLevelById,
-    get currentLevel() { return currentLevel; },
-    get playerProgress() { return playerProgress; },
-    get hintsUsed() { return hintsUsed; }
+    isLevelUnlocked,
+    isLevelCompleted,
+    getLevelStars,
+    getLevelStats,
+    get currentLevel() { return currentLevel ? { ...currentLevel } : null; }, // BUG FIX: Return copy
+    get playerProgress() { return { ...playerProgress }; }, // Return copy to prevent external modification
+    get hintsUsed() { return currentLevelHints; },
+    get levelStartTime() { return levelStartTime; }
   };
 })();
 
-// Expose to global scope
 window.gameManager = gameManager;
 
-// Initialize the game manager when the DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', gameManager.init);
-} else {
-  gameManager.init();
-}
-
-// Force initialize after a short delay as fallback
-setTimeout(() => {
-  const loading = document.getElementById('initial-loading');
-  if (loading && loading.style.display !== 'none') {
-    console.log("⚠️ Forcing initialization after timeout");
-    gameManager.init();
-  }
-}, 2000);
-
-// Initialize everything properly
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("🌟 PyChamp initializing...");
+  console.log('🎮 PyChamp - DOM Content Loaded');
   
-  // Initialize in correct order
-  const initSequence = async () => {
-    // Wait for all scripts to load
-    await new Promise(resolve => {
-      const checkReady = () => {
-        if (window.gameManager && window.ui && window.gameLevels && window.editorManager) {
-          resolve();
-        } else {
-          setTimeout(checkReady, 50);
-        }
-      };
-      checkReady();
-    });
-    
-    // Initialize game manager first
-    window.gameManager.init();
-    
-    // Then initialize UI
-    window.ui.init();
-    
-    console.log("🎉 PyChamp ready to play!");
-  };
-  
-  initSequence().catch(console.error);
-});
-
-// Add this debugging script at the end
-
-// Immediate DOM check
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("🔍 DOM Content Loaded - Starting immediate checks");
-  
-  // Check for critical elements
-  const criticalElements = [
-    'splash-screen',
-    'level-map', 
-    'level-map-grid',
-    'start-game-btn',
-    'gameplay'
-  ];
-  
-  console.log("=== DOM ELEMENT CHECK ===");
-  criticalElements.forEach(id => {
-    const element = document.getElementById(id);
-    console.log(`${id}:`, element ? '✅ Found' : '❌ Missing', element);
-  });
-  
-  // Check for game data
-  console.log("=== GAME DATA CHECK ===");
-  console.log("window.gameLevels:", window.gameLevels ? `✅ ${window.gameLevels.length} levels` : '❌ Missing');
-  console.log("window.gameManager:", window.gameManager ? '✅ Found' : '❌ Missing');
-  console.log("window.ui:", window.ui ? '✅ Found' : '❌ Missing');
-  
-  // Initialize with error handling
-  const initSequence = async () => {
+  const initializeGame = async () => {
     let attempts = 0;
-    const maxAttempts = 50; // 5 seconds max wait
+    const maxAttempts = 50;
     
     while (attempts < maxAttempts) {
-      console.log(`Initialization attempt ${attempts + 1}/${maxAttempts}`);
-      
       if (window.gameManager && window.ui && window.gameLevels) {
-        console.log("✅ All required modules loaded");
+        console.log('✅ All modules loaded, initializing...');
         
-        // Initialize game manager
-        window.gameManager.init();
-        
-        // Initialize UI
-        window.ui.init();
-        
-        console.log("🎉 PyChamp initialization complete!");
-        return;
+        // Initialize game manager first
+        if (window.gameManager.init()) {
+          // Then initialize UI
+          if (window.ui.init) {
+            window.ui.init();
+          }
+          
+          // Setup main navigation buttons
+          setupMainNavigation();
+          
+          console.log('🎉 PyChamp initialized successfully!');
+          return;
+        }
       }
-      
-      console.log("⏳ Waiting for modules...", {
-        gameManager: !!window.gameManager,
-        ui: !!window.ui,
-        gameLevels: !!window.gameLevels
-      });
       
       attempts++;
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-    console.error("❌ Initialization failed - modules not ready after 5 seconds");
-    alert("Game failed to initialize. Please refresh the page.");
+    console.error('❌ Failed to initialize PyChamp - modules not ready');
   };
   
-  initSequence().catch(console.error);
+  function setupMainNavigation() {
+    // Start game button
+    const startGameBtn = document.getElementById('start-game-btn');
+    if (startGameBtn) {
+      startGameBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.ui) window.ui.showView('level-map');
+      });
+    }
+    
+    // How to play button
+    const howToPlayBtn = document.getElementById('how-to-play-btn');
+    if (howToPlayBtn) {
+      howToPlayBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.ui) window.ui.showView('how-to-play');
+      });
+    }
+    
+    // Reset progress button
+    const resetBtn = document.getElementById('reset-progress-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (window.gameManager) {
+          window.gameManager.resetProgress();
+        }
+      });
+    }
+    
+    // Back to menu buttons
+    document.querySelectorAll('[id$="-to-menu-btn"], [id$="-back-btn"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (btn.id === 'back-to-menu-btn') {
+          if (window.ui) window.ui.showView('level-map');
+        } else {
+          if (window.ui) window.ui.showView('splash-screen');
+        }
+      });
+    });
+  }
+  
+  initializeGame();
 });

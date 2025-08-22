@@ -1,304 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=2.0">
-  <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>PyChamp - Learn Python</title>
-  <link rel="stylesheet" href="styles/style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-  <style>
-    /* Immediate style fix to ensure visibility */
-    .game-wrapper { 
-      display: block !important; 
-      opacity: 1 !important;
-    }
-    #splash-screen, #how-to-play, #level-map-container, #gameplay-container {
-      display: none;
-    }
-    #splash-screen:not(.hidden) {
-      display: block !important;
-    }
-    .view-container:not(.hidden) {
-      display: block !important;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyChamp - Learn Python Through Interactive Challenges</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
 </head>
 <body>
-  <!-- Simple loading indicator -->
-  <div id="initial-loading">Loading PyChamp...</div>
-
-  <!-- Game content -->
-  <div class="game-wrapper">
-    <!-- Splash screen -->
+    <!-- Splash Screen -->
     <div id="splash-screen" class="view-container">
-      <div class="splash-inner">
-        <div class="brand">PyChamp</div>
-        <div class="tagline">Learn Python Through Interactive Challenges!</div>
-        
-        <!-- Progress Display -->
-        <div class="overall-progress">
-          <div id="progress-text">0/6 levels completed (0%)</div>
-          <div class="progress-bar">
-            <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
-          </div>
-        </div>
-        
-        <div class="splash-buttons">
-          <button id="start-game-btn" class="btn btn-primary">🚀 Start Game</button>
-          <button id="how-to-play-btn" class="btn btn-secondary">❓ How to Play</button>
-          <button id="reset-progress-btn" class="btn btn-warning">🔄 Reset Progress</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- How to play -->
-    <div id="how-to-play" class="view-container hidden">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>How to Play</h3>
-        </div>
-        <div class="panel-body">
-          <ul>
-            <li>Select a level from the map</li>
-            <li>Read the instructions and write Python code</li>
-            <li>Run your code to see if it works</li>
-            <li>Complete the challenge to earn stars and unlock new levels</li>
-          </ul>
-        </div>
-        <div class="panel-footer">
-          <button id="back-to-menu-btn" class="btn back-to-menu">Back to Menu</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Level map -->
-    <div id="level-map" class="view-container hidden">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>🗺️ Level Map</h3>
-        </div>
-        <div class="panel-body">
-          <div id="level-map-grid" class="level-map-grid">
-            <!-- Level cards will be inserted here -->
-          </div>
-        </div>
-        <div class="panel-footer">
-          <button id="level-map-to-menu-btn" class="btn btn-secondary">🏠 Back to Menu</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Gameplay screen -->
-    <div id="gameplay-container" class="view-container hidden">
-      <div class="gameplay-top">
-        <div class="panel">
-          <div class="panel-header">
-            <h3 id="level-title-scene">Level</h3>
-          </div>
-          <div id="scene-container" class="panel-body scene"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <h3 id="level-title-dialogue">Mission</h3>
-          </div>
-          <div class="panel-body">
-            <div id="npc-dialogue" class="dialogue"></div>
-            <div id="instructions" class="instructions"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="gameplay-bottom">
-        <div class="panel">
-          <div class="panel-header">
-            <h3>Editor</h3>
-            <div class="panel-actions">
-              <button id="hint-btn" class="btn btn-secondary">💡 Hint</button>
-              <button id="run-btn" class="btn btn-primary">▶️ Run</button>
-              <button id="prev-level-btn" class="btn">← Prev</button>
-              <button id="next-level-btn" class="btn">Next →</button>
+        <div class="splash-inner">
+            <div class="brand">PyChamp</div>
+            <div class="tagline">Learn Python Through Interactive Challenges!</div>
+            <div class="overall-progress">
+                <div id="progress-text">0/6 levels completed (0%)</div>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+                </div>
             </div>
-          </div>
-          <div id="editor-container" class="panel-body editor"></div>
+            <div class="splash-buttons">
+                <button id="start-game-btn" class="btn btn-primary">🚀 Start Game</button>
+                <button id="how-to-play-btn" class="btn btn-secondary">❓ How to Play</button>
+                <button id="reset-progress-btn" class="btn btn-warning">🔄 Reset Progress</button>
+            </div>
         </div>
+    </div>
 
+    <!-- Level Map -->
+    <div id="level-map" class="view-container hidden">
         <div class="panel">
-          <div class="panel-header">
-            <h3>Console</h3>
-          </div>
-          <div id="console-output" class="panel-body console"></div>
+            <div class="panel-header">
+                <h3>🗺️ Level Map</h3>
+            </div>
+            <div class="panel-body">
+                <div id="level-map-grid" class="level-map-grid"></div>
+            </div>
+            <div class="panel-footer">
+                <button id="level-map-to-menu-btn" class="btn btn-secondary">🏠 Back to Menu</button>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Modals -->
-  <div id="hint-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>💡 Hint</h2>
-      </div>
-      <div class="modal-body">
-        <p class="hint-content">This is where the hint will appear</p>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary close-hint">Got it!</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="victory-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Level Complete!</h2>
-        <div id="victory-stars" class="stars-display"></div>
-      </div>
-      <div class="modal-body">
-        <p>Great job! Choose what to do next.</p>
-      </div>
-      <div class="modal-actions">
-        <button id="victory-prev" class="btn">← Previous</button>
-        <button id="victory-repeat" class="btn btn-warning">🔄 Repeat</button>
-        <button id="victory-next" class="btn btn-primary">Next →</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-  <script>
-    // Emergency debug script
-    console.log("HTML loaded");
-    window.onload = function() {
-      console.log("Window loaded");
-      // Make splash visible instantly
-      document.getElementById('initial-loading').style.display = 'none';
-      document.getElementById('splash-screen').classList.remove('hidden');
-      document.getElementById('splash-screen').style.display = 'block';
-    };
-  </script>
-  
-  <script src="scripts/svg-assets.js"></script>
-  <script src="scripts/game-levels.js"></script>
-  <script src="scripts/ui.js"></script>
-  <script src="scripts/editor.js"></script>
-  <script src="scripts/pyodide-runner.js"></script>
-  <script src="scripts/main.js"></script>
-  <script>
-  // Add additional hint button debugging
-  document.addEventListener('DOMContentLoaded', function() {
-    const hintBtn = document.getElementById('hint-btn');
-    if (hintBtn) {
-      console.log('Hint button found in DOM');
-      hintBtn.addEventListener('click', function() {
-        console.log('Hint button clicked (direct handler)');
-        
-        // Fallback if other methods fail
-        const currentLevel = window.gameManager?.currentLevel;
-        if (currentLevel && currentLevel.hints && currentLevel.hints.length > 0) {
-          const hint = currentLevel.hints[0];
-          alert(`💡 Hint: ${hint}`);
-        } else {
-          console.log('No current level or hints available');
-        }
-      });
-    } else {
-      console.error('Hint button not found in DOM');
-    }
-  });
-</script>
-<script>
-  // Ensure hint modal exists
-  document.addEventListener('DOMContentLoaded', function() {
-    // Create hint modal if it doesn't exist
-    if (!document.getElementById('hint-modal')) {
-      const hintModal = document.createElement('div');
-      hintModal.id = 'hint-modal';
-      hintModal.className = 'modal hidden';
-      hintModal.innerHTML = `
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2>💡 Hint</h2>
-          </div>
-          <div class="modal-body">
-            <p class="hint-content">This is where hints will appear.</p>
-          </div>
-          <div class="modal-actions">
-            <button class="btn btn-primary close-hint">Got it!</button>
-          </div>
+    <!-- Gameplay View -->
+    <div id="gameplay" class="view-container hidden">
+        <div class="panel">
+            <div class="panel-header">
+                <h3 id="level-title" class="level-title">Level 1</h3>
+                <div class="panel-actions">
+                    <button id="hint-btn" class="btn btn-secondary">💡 Hint</button>
+                    <button id="back-to-menu-btn" class="btn btn-warning">🏠 Menu</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="gameplay-layout">
+                    <!-- Scene and Dialogue Row -->
+                    <div class="gameplay-row">
+                        <div class="panel scene-panel">
+                            <div class="panel-header">
+                                <h3>🎭 Scene</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div id="scene-container" class="scene-container"></div>
+                            </div>
+                        </div>
+                        <div class="panel dialogue-panel">
+                            <div class="panel-header">
+                                <h3>💬 Guide</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div id="npc-dialogue" class="dialogue-content"></div>
+                                <div id="instructions" class="instructions-content"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Editor and Console Row -->
+                    <div class="gameplay-row">
+                        <div class="panel editor-panel">
+                            <div class="panel-header">
+                                <h3>📝 Code Editor</h3>
+                                <div class="panel-actions">
+                                    <button id="run-btn" class="btn btn-primary">▶️ Run</button>
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div id="editor-container" class="editor-container"></div>
+                            </div>
+                        </div>
+                        <div class="panel console-panel">
+                            <div class="panel-header">
+                                <h3>📊 Console</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div id="console-output" class="console-output"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      `;
-      document.body.appendChild(hintModal);
-      console.log('Added missing hint modal to document');
-    }
+    </div>
 
-    // Direct access to hint button for testing
-    const hintBtn = document.getElementById('hint-btn');
-    if (hintBtn) {
-      console.log('Found hint button in DOM');
-    } else {
-      console.error('Hint button not found in DOM');
-    }
-  });
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, checking essential elements');
-    
-    // Check critical elements
-    const criticalElements = [
-      'start-game-btn', 'level-map-grid', 'hint-btn', 
-      'run-btn', 'console-output', 'editor-container'
-    ];
-    
-    criticalElements.forEach(id => {
-      const el = document.getElementById(id);
-      console.log(`Element ${id}: ${el ? 'Found ✅' : 'Missing ❌'}`);
-    });
-    
-    // Check global objects
-    const globalObjects = [
-      'ui', 'gameManager', 'editorManager', 'pyodideRunner', 'gameLevels'
-    ];
-    
-    globalObjects.forEach(obj => {
-      console.log(`Global ${obj}: ${window[obj] ? 'Available ✅' : 'Missing ❌'}`);
-    });
-    
-    // Add emergency event handlers if needed
-    const startGameBtn = document.getElementById('start-game-btn');
-    if (startGameBtn && !startGameBtn.onclick) {
-      console.log('Adding emergency handler to start game button');
-      startGameBtn.addEventListener('click', function() {
-        console.log('Emergency start game handler');
-        if (window.ui) {
-          window.ui.showView('level-map');
-        } else {
-          const splashScreen = document.getElementById('splash-screen');
-          const levelMap = document.getElementById('level-map');
-          if (splashScreen && levelMap) {
-            splashScreen.style.display = 'none';
-            levelMap.style.display = 'block';
-          }
-        }
-      });
-    }
-    
-    // Initialize game if not done
-    if (window.gameManager && !window.gameInitialized) {
-      console.log('Emergency game initialization');
-      window.gameInitialized = true;
-      try {
-        window.gameManager.loadProgress?.();
-      } catch (e) {
-        console.error('Failed to load progress:', e);
-      }
-    }
-  });
-</script>
+    <!-- How to Play -->
+    <div id="how-to-play" class="view-container hidden">
+        <div class="panel">
+            <div class="panel-header">
+                <h3>❓ How to Play</h3>
+                <button id="howto-back-btn" class="btn btn-secondary">🏠 Back</button>
+            </div>
+            <div class="panel-body">
+                <div class="howto-content">
+                    <h4>🎯 Your Mission</h4>
+                    <p>Learn Python by solving interactive coding challenges. Each level teaches new concepts!</p>
+                    
+                    <h4>🎮 How to Play</h4>
+                    <ol>
+                        <li>Read the challenge instructions</li>
+                        <li>Write Python code in the editor</li>
+                        <li>Click "Run" to test your code</li>
+                        <li>Use hints if you get stuck</li>
+                    </ol>
+                    
+                    <h4>⭐ Scoring</h4>
+                    <p>⭐⭐⭐ Perfect (No hints) | ⭐⭐☆ Great (1-2 hints) | ⭐☆☆ Good (3+ hints)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts in correct order -->
+    <script src="scripts/svg-assets.js"></script>
+    <script src="scripts/game-levels.js"></script>
+    <script src="scripts/pyodide-runner.js"></script>
+    <script src="scripts/editor.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script src="scripts/main.js"></script>
+    <script src="scripts/levelManager.js"></script>
 </body>
 </html>

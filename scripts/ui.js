@@ -1,380 +1,236 @@
 const ui = (() => {
   console.log("UI Manager initializing");
-
-  // Utility function to get elements
+  
+  /**
+   * Utility Functions
+   */
   function getEl(id) {
     return document.getElementById(id);
   }
 
-  // Utility function to log messages
   function log(message) {
     console.log(`🔵 UI: ${message}`);
   }
-
-  // Fixed attachButtonListener function
-  function attachButtonListener(selector, handler) {
-    // Handle both element and selector string
-    let elements = [];
-    
-    if (typeof selector === 'string') {
-      if (selector.startsWith('#')) {
-        const el = document.getElementById(selector.substring(1));
-        if (el) elements = [el];
-      } else if (selector.startsWith('.')) {
-        elements = Array.from(document.querySelectorAll(selector));
-      } else {
-        const el = document.getElementById(selector);
-        if (el) elements = [el];
-      }
-    } else if (selector && selector.nodeType) {
-      elements = [selector];
+  
+  /**
+   * Button Management - Reliable event handling
+   */
+  function attachButtonListener(element, handler) {
+    // Handle both element objects and ID strings
+    if (typeof element === 'string') {
+      element = getEl(element);
     }
-
-    elements.forEach(element => {
-      if (!element) return;
-
-      // Remove existing event listeners by cloning
-      const newElement = element.cloneNode(true);
+    
+    if (!element || !handler) return;
+    
+    // Clone to remove existing listeners
+    const newElement = element.cloneNode(true);
+    if (element.parentNode) {
       element.parentNode.replaceChild(newElement, element);
-
-      // Add new event listener
-      newElement.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        log(`Button clicked: ${newElement.id || newElement.className}`);
-        
-        try {
-          handler(e, newElement);
-        } catch (error) {
-          console.error('Button handler error:', error);
-        }
-      });
-
-      log(`Event listener attached to: ${newElement.id || newElement.className}`);
+    }
+    
+    // Attach new listener with error handling
+    newElement.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      log(`Button clicked: ${newElement.id || newElement.className}`);
+      
+      try {
+        handler(e);
+      } catch (error) {
+        console.error("Button handler error:", error);
+      }
     });
+    
+    return newElement;
   }
-
-  // Initialize all button event listeners
-  function initializeButtons() {
-    log("Initializing all buttons");
-
-    // Splash screen buttons with enhanced debugging
-    attachButtonListener('start-game-btn', () => {
-      log("Start game clicked - beginning debug");
-      
-      // Check if gameManager exists
-      if (!window.gameManager) {
-        console.error("❌ GameManager not found!");
-        alert("Game system not ready. Please refresh the page.");
-        return;
-      }
-      
-      console.log("✅ GameManager found:", window.gameManager);
-      
-      // Check if gameLevels exist
-      if (!window.gameLevels) {
-        console.error("❌ Game levels not found!");
-        alert("Game levels not loaded. Please refresh the page.");
-        return;
-      }
-      
-      console.log("✅ Game levels found:", window.gameLevels.length, "levels");
-      
-      // Check if level map elements exist
-      const levelMapView = getEl('level-map');
-      const levelMapGrid = getEl('level-map-grid');
-      
-      console.log("Level map view element:", levelMapView);
-      console.log("Level map grid element:", levelMapGrid);
-      
-      if (!levelMapView) {
-        console.error("❌ Level map view not found in DOM!");
-        alert("Level map not found. Please check the HTML structure.");
-        return;
-      }
-      
-      if (!levelMapGrid) {
-        console.error("❌ Level map grid not found in DOM!");
-        alert("Level map grid not found. Please check the HTML structure.");
-        return;
-      }
-      
-      // Try to show the level map
-      log("Attempting to show level map view");
-      showView('level-map');
-      
-      // Force update the level map after a short delay
-      setTimeout(() => {
-        log("Force updating level map");
-        updateLevelMap();
-      }, 200);
-    });
-
-    attachButtonListener('how-to-play-btn', () => {
-      log("How to play clicked");
-      showView('how-to-play');
-    });
-
-    attachButtonListener('reset-progress-btn', () => {
-      log("Reset progress clicked");
-      if (window.gameManager) {
-        window.gameManager.resetProgress();
-      }
-    });
-
-    // Back to menu buttons
-    attachButtonListener('back-to-menu-btn', () => {
-      log("Back to menu clicked");
-      showView('splash-screen');
-    });
-
-    attachButtonListener('level-map-to-menu-btn', () => {
-      log("Level map to menu clicked");
-      showView('splash-screen');
-    });
-
-    // Generic back-to-menu class buttons
-    attachButtonListener('.back-to-menu', () => {
-      log("Generic back to menu clicked");
-      showView('splash-screen');
-    });
-
-    // Modal close buttons
-    attachButtonListener('.close-hint', () => {
-      log("Hint modal close clicked");
-      const modal = getEl('hint-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      }
-    });
-
-    attachButtonListener('.close-victory', () => {
-      log("Victory modal close clicked");
-      const modal = getEl('victory-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      }
-    });
-
-    log("All buttons initialized");
-  }
-
-  // Enhanced showView function with debugging
+  
+  /**
+   * View Management - Control which screen is visible
+   */
   function showView(viewName) {
-    log(`Showing view: ${viewName}`);
-    
+    console.log(`UI: Showing view - ${viewName}`);
+  
     const views = ['splash-screen', 'level-map', 'gameplay', 'how-to-play'];
-    
-    // Debug: Check if all view elements exist
+  
     views.forEach(view => {
-      const element = getEl(view);
-      console.log(`View "${view}" element:`, element);
-    });
-    
-    views.forEach(view => {
-      const element = getEl(view);
+      const element = document.getElementById(view);
       if (element) {
         if (view === viewName) {
           element.classList.remove('hidden');
           element.style.display = 'block';
-          console.log(`✅ Showing view: ${view}`);
         } else {
           element.classList.add('hidden');
           element.style.display = 'none';
         }
-      } else {
-        console.error(`❌ View element not found: ${view}`);
       }
     });
-
-    // Special handling for specific views
+  
     if (viewName === 'level-map') {
-      log("Level map view requested - scheduling update");
-      setTimeout(() => {
-        log("Executing level map update");
-        updateLevelMap();
-      }, 100);
+      setTimeout(updateLevelMap, 50);
     } else if (viewName === 'splash-screen') {
-      setTimeout(() => updateProgressDisplay(), 100);
+      setTimeout(updateProgressDisplay, 50);
     }
-    
-    console.log(`View switching complete. Current view should be: ${viewName}`);
   }
-
-  // Enhanced updateLevelMap with extensive debugging
+  
+  /**
+   * Level Map - Render all available levels
+   */
   function updateLevelMap() {
-    log("=== UPDATE LEVEL MAP DEBUG START ===");
-    
-    const levelMapGrid = getEl('level-map-grid');
-    console.log("Level map grid element:", levelMapGrid);
-    
+    console.log('UI: Updating level map');
+  
+    const levelMapGrid = document.getElementById('level-map-grid');
     if (!levelMapGrid) {
-      console.error("❌ Level map grid not found!");
+      console.error('UI: Level map grid element not found!');
       return;
     }
-
-    if (!window.gameLevels) {
-      console.error("❌ Game levels not available!");
-      levelMapGrid.innerHTML = '<p style="color: red; padding: 20px;">❌ Game levels not loaded!</p>';
+  
+    if (!window.gameLevels || !window.gameManager) {
+      console.error('UI: Game levels or manager not available!');
+      levelMapGrid.innerHTML = '<p style="text-align: center; color: #ef4444;">Error: Game not ready. Please refresh.</p>';
       return;
     }
-
-    console.log("✅ Game levels available:", window.gameLevels.length);
-
+  
     // Clear existing content
     levelMapGrid.innerHTML = '';
-    console.log("Level map grid cleared");
-
-    // Get player progress
-    const progress = window.gameManager?.playerProgress || { 
-      unlockedLevels: [1], 
-      completedLevels: [], 
-      levelScores: {} 
-    };
-    
-    console.log("Player progress:", progress);
-
-    // Create level cards
-    let cardsCreated = 0;
-    window.gameLevels.forEach((level, index) => {
-      console.log(`Creating card for level ${level.id}:`, level.title);
+  
+    // Create level cards using gameManager methods
+    window.gameLevels.forEach(level => {
+      const isUnlocked = window.gameManager.isLevelUnlocked(level.id);
+      const isCompleted = window.gameManager.isLevelCompleted(level.id);
+      const stars = window.gameManager.getLevelStars(level.id);
+      const stats = window.gameManager.getLevelStats(level.id);
       
-      const isUnlocked = progress.unlockedLevels.includes(level.id);
-      const isCompleted = progress.completedLevels.includes(level.id);
-      const stars = progress.levelScores[level.id] || 0;
-
-      const levelCard = document.createElement('div');
-      levelCard.className = `level-card ${isUnlocked ? '' : 'locked'}`;
+      // Create card element
+      const card = document.createElement('div');
+      card.className = `level-card ${isUnlocked ? '' : 'locked'}`;
       
-      levelCard.innerHTML = `
+      // Add card content with stats
+      card.innerHTML = `
         <h4>Level ${level.id}: ${level.title}</h4>
-        <div class="meta">Concepts: ${level.concepts}</div>
+        <div class="meta">
+          <div>Concepts: ${level.concepts}</div>
+          ${stats.attempts > 0 ? `<small style="opacity: 0.7;">Attempts: ${stats.attempts}</small>` : ''}
+        </div>
         <div class="stars-display">
           ${Array.from({length: 3}, (_, i) => 
             `<span>${i < stars ? '⭐' : '☆'}</span>`
           ).join('')}
         </div>
         <div class="actions">
-          ${isUnlocked ? 
-            `<button class="btn btn-primary play-level-btn" data-level-id="${level.id}">
-              ${isCompleted ? '🔄 Replay' : '▶️ Play'}
-            </button>` : 
-            '<span class="locked-text">🔒 Locked</span>'
+          ${isUnlocked
+            ? `<button class="btn btn-primary play-level-btn" data-level-id="${level.id}">
+                ${isCompleted ? '🔄 Replay' : '▶️ Play'}
+              </button>`
+            : `<span style="color: #94a3b8; font-style: italic; text-align: center; padding: 8px;">🔒 Complete previous levels to unlock</span>`
           }
         </div>
       `;
-
-      levelMapGrid.appendChild(levelCard);
-      cardsCreated++;
-      console.log(`✅ Level card ${level.id} added to grid`);
-    });
-
-    console.log(`Total cards created: ${cardsCreated}`);
-
-    // Add event delegation for play buttons
-    levelMapGrid.addEventListener('click', function(e) {
-      if (e.target.classList.contains('play-level-btn')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const levelId = parseInt(e.target.dataset.levelId);
-        console.log(`🎮 Play button clicked for level ${levelId}`);
-        
-        if (window.gameManager) {
-          window.gameManager.startLevel(levelId);
-        } else {
-          console.error("❌ GameManager not available");
-          alert("Game system not ready. Please refresh the page.");
+      
+      levelMapGrid.appendChild(card);
+      
+      // Add event listener to play button if unlocked
+      if (isUnlocked) {
+        const playBtn = card.querySelector('.play-level-btn');
+        if (playBtn) {
+          playBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const levelId = parseInt(this.dataset.levelId);
+            console.log(`UI: Starting level ${levelId}`);
+            
+            if (window.gameManager.startLevel(levelId)) {
+              console.log(`Level ${levelId} started successfully`);
+            } else {
+              console.error(`Failed to start level ${levelId}`);
+            }
+          });
         }
       }
     });
-
-    console.log("Event delegation attached to level map grid");
-
+  
+    console.log(`UI: Created ${window.gameLevels.length} level cards`);
+  
     // Update progress display
     updateProgressDisplay();
-    
-    // Final verification
-    const finalCardCount = levelMapGrid.children.length;
-    console.log(`Final verification: ${finalCardCount} cards in level map grid`);
-    
-    if (finalCardCount === 0) {
-      levelMapGrid.innerHTML = '<p style="color: red; padding: 20px;">❌ No level cards were created!</p>';
+  }
+  
+  /**
+   * Load Level UI - Setup gameplay screen for specific level
+   */
+  function loadLevelUI(level) {
+    if (!level) {
+      console.error('UI: No level data provided to loadLevelUI');
+      return;
     }
     
-    log("=== UPDATE LEVEL MAP DEBUG END ===");
-  }
-
-  // Load level UI
-  function loadLevelUI(level) {
-    log(`Loading UI for Level ${level.id}: ${level.title}`);
-    
-    // Set titles
-    const titleElements = ['level-title-scene', 'level-title-dialogue'];
-    titleElements.forEach(id => {
-      const el = getEl(id);
-      if (el) el.textContent = `Level ${level.id}: ${level.title}`;
-    });
-    
-    // Set dialogue
-    const dialogue = getEl('npc-dialogue');
+    console.log(`UI: Loading Level ${level.id}: ${level.title}`);
+  
+    // Update title
+    const titleElement = document.querySelector('.level-title');
+    if (titleElement) {
+      titleElement.textContent = `Level ${level.id}: ${level.title}`;
+    }
+  
+    // Update dialogue
+    const dialogue = document.getElementById('npc-dialogue');
     if (dialogue) {
       dialogue.innerHTML = `<p>${level.dialogue}</p>`;
     }
-    
-    // Set instructions
-    const instructions = getEl('instructions');
+  
+    // Update instructions
+    const instructions = document.getElementById('instructions');
     if (instructions) {
-      instructions.innerHTML = `<p>${level.instructions}</p>`;
+      instructions.innerHTML = `<p><strong>Task:</strong> ${level.instructions}</p>`;
     }
-    
-    // Set scene
-    const scene = getEl('scene-container');
+  
+    // Update scene
+    const scene = document.getElementById('scene-container');
     if (scene) {
       if (window.SVGAssets && level.scene && window.SVGAssets[level.scene]) {
         scene.innerHTML = window.SVGAssets[level.scene];
       } else {
-        scene.innerHTML = `<div style="padding: 20px; text-align: center; color: #64748b;">
-          <h3>Level ${level.id}</h3>
-          <p>${level.title}</p>
-        </div>`;
+        scene.innerHTML = `
+          <div style="text-align: center; color: #94a3b8;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🎭</div>
+            <h3>Level ${level.id}</h3>
+            <p>${level.title}</p>
+          </div>
+        `;
       }
     }
-    
+  
     // Initialize editor
     if (window.editorManager) {
-      window.editorManager.init('editor-container', level.startingCode || '');
+      const startingCode = level.startingCode || '# Write your Python code here\nprint("Hello, Python!")';
+      window.editorManager.init('editor-container', startingCode);
     }
-    
+  
     // Clear console
-    const consoleOutput = getEl('console-output');
+    const consoleOutput = document.getElementById('console-output');
     if (consoleOutput) {
-      consoleOutput.innerHTML = `<span class="log-info">Welcome to Level ${level.id}: ${level.title}</span>\n`;
-      consoleOutput.innerHTML += `<span class="log-info">Click the Run button when you're ready!</span>\n`;
+      consoleOutput.innerHTML = `Welcome to Level ${level.id}: ${level.title}\nWrite your code and click Run to test it!`;
     }
-    
-    // Set up level-specific buttons
+  
+    // Setup level buttons
     setupLevelButtons(level);
-    
-    log(`Level ${level.id} UI loaded successfully`);
+  
+    console.log(`UI: Level ${level.id} UI loaded successfully`);
   }
-
-  // Setup level-specific buttons (run, hint, navigation)
+  
   function setupLevelButtons(level) {
-    log("Setting up level buttons");
-
+    console.log("Setting up level buttons");
+  
     // Setup Run Button
-    const runBtn = getEl('run-btn');
+    const runBtn = document.getElementById('run-btn');
     if (runBtn) {
-      // Remove existing listeners
       const newRunBtn = runBtn.cloneNode(true);
       runBtn.parentNode.replaceChild(newRunBtn, runBtn);
-
+  
       newRunBtn.addEventListener('click', async function() {
-        log("Run button clicked");
+        console.log("Run button clicked");
         
         newRunBtn.disabled = true;
         newRunBtn.textContent = "Running...";
@@ -383,34 +239,25 @@ const ui = (() => {
           if (!window.editorManager || !window.pyodideRunner) {
             throw new Error("Required modules not available");
           }
-
+  
           const code = window.editorManager.getCode();
-          const consoleOutput = getEl('console-output');
+          const consoleOutput = document.getElementById('console-output');
           
-          // Clear console
           if (consoleOutput) {
             consoleOutput.innerHTML = `<span class="log-info">Running your code...</span>\n`;
           }
-
+  
           const result = await window.pyodideRunner.run(code, level);
           
           if (consoleOutput) {
-            // Add output
             if (result.output) {
               consoleOutput.innerHTML += `<span class="log-output">${result.output}</span>\n`;
             }
-
-            // Handle errors
+  
             if (result.error) {
               consoleOutput.innerHTML += `<span class="log-error">❌ Error: ${result.error}</span>\n`;
-              
-              // Add helpful tips for common errors
-              if (result.error.includes("SyntaxError")) {
-                consoleOutput.innerHTML += `<span class="log-info">💡 Tip: Check your syntax - make sure text is in quotes and parentheses match!</span>\n`;
-              }
               consoleOutput.innerHTML += `<span class="log-info">Need help? Click the 💡 Hint button!</span>\n`;
             } else if (level.expectedOutput) {
-              // Check if output matches expected
               const userOutput = result.output.trim();
               const expectedOutput = level.expectedOutput.trim();
               
@@ -429,12 +276,11 @@ const ui = (() => {
               }
             }
             
-            // Scroll to bottom
             consoleOutput.scrollTop = consoleOutput.scrollHeight;
           }
         } catch (error) {
           console.error("Error running code:", error);
-          const consoleOutput = getEl('console-output');
+          const consoleOutput = document.getElementById('console-output');
           if (consoleOutput) {
             consoleOutput.innerHTML = `<span class="log-error">❌ System Error: ${error.message}</span>\n`;
           }
@@ -444,14 +290,13 @@ const ui = (() => {
         }
       });
     }
-
+  
     // Setup Hint Button
-    const hintBtn = getEl('hint-btn');
+    const hintBtn = document.getElementById('hint-btn');
     if (hintBtn && level.hints && level.hints.length > 0) {
-      // Remove existing listeners
       const newHintBtn = hintBtn.cloneNode(true);
       hintBtn.parentNode.replaceChild(newHintBtn, hintBtn);
-
+  
       newHintBtn.disabled = false;
       const hintsUsed = window.gameManager?.hintsUsed || 0;
       
@@ -460,14 +305,14 @@ const ui = (() => {
       } else {
         newHintBtn.textContent = hintsUsed === 0 ? "💡 Hint" : `💡 Hint (${hintsUsed}/5)`;
       }
-
+  
       newHintBtn.addEventListener('click', function() {
-        log("Hint button clicked");
+        console.log("Hint button clicked");
         
         if (window.gameManager) {
           window.gameManager.incrementHints();
         }
-
+  
         const currentHints = window.gameManager?.hintsUsed || 1;
         let hintMessage = "";
         
@@ -484,70 +329,217 @@ const ui = (() => {
       hintBtn.disabled = true;
       hintBtn.textContent = "💡 No Hints";
     }
-
-    log("Level buttons setup complete");
+  
+    console.log("Level buttons setup complete");
   }
-
-  // Show hint modal
-  function showHintModal(hint, isSolution = false) {
-    log(`Showing ${isSolution ? "solution" : "hint"}: "${hint}"`);
+  
+  /**
+   * Run Button - Execute user's code
+   */
+  function setupRunButton(level) {
+    log("Setting up run button");
+    
+    const runBtn = getEl('run-btn');
+    if (!runBtn) return;
+    
+    attachButtonListener(runBtn, async () => {
+      log("Run button clicked");
+      
+      runBtn.disabled = true;
+      runBtn.innerHTML = '<span class="btn-icon">⏳</span> Running...';
+      
+      try {
+        if (!window.editorManager || !window.pyodideRunner) {
+          throw new Error("Code execution system not ready");
+        }
+        
+        const code = window.editorManager.getCode();
+        const consoleOutput = getEl('console-output');
+        
+        // Clear console
+        if (consoleOutput) {
+          consoleOutput.innerHTML = '<span class="log-info">Running your code...</span>';
+        }
+        
+        // Run code
+        const result = await window.pyodideRunner.run(code, level);
+        
+        // Handle result
+        if (consoleOutput) {
+          // Add output
+          if (result.output) {
+            consoleOutput.innerHTML += `<span class="log-output">${result.output}</span>`;
+          }
+          
+          // Handle errors
+          if (result.error) {
+            consoleOutput.innerHTML += `<span class="log-error">Error: ${result.error}</span>`;
+            consoleOutput.innerHTML += `<span class="log-info">Need help? Click the 💡 Hint button!</span>`;
+          }
+          // Check success
+          else if (level.expectedOutput) {
+            const userOutput = result.output.trim();
+            const expectedOutput = level.expectedOutput.trim();
+            
+            if (userOutput === expectedOutput || 
+                (level.hasUserInput && userOutput.includes(expectedOutput))) {
+              
+              consoleOutput.innerHTML += `<span class="log-success">✅ Success! Level completed!</span>`;
+              
+              setTimeout(() => {
+                if (window.gameManager) {
+                  window.gameManager.handleLevelSuccess();
+                }
+              }, 1000);
+            } else {
+              consoleOutput.innerHTML += `
+                <span class="log-error">Expected: "${expectedOutput}"</span>
+                <span class="log-error">Got: "${userOutput}"</span>
+              `;
+            }
+          }
+          
+          // Scroll to bottom
+          consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+      } catch (error) {
+        log(`Error running code: ${error.message}`);
+        
+        const consoleOutput = getEl('console-output');
+        if (consoleOutput) {
+          consoleOutput.innerHTML = `<span class="log-error">System Error: ${error.message}</span>`;
+        }
+      } finally {
+        runBtn.disabled = false;
+        runBtn.innerHTML = '<span class="btn-icon">▶️</span> Run';
+      }
+    });
+  }
+  
+  /**
+   * Hint Button - Show progressive hints
+   */
+  function setupHintButton(level) {
+    log("Setting up hint button");
+    
+    const hintBtn = getEl('hint-btn');
+    if (!hintBtn) return;
+    
+    // Disable if no hints available
+    if (!level || !level.hints || level.hints.length === 0) {
+      hintBtn.disabled = true;
+      return;
+    }
+    
+    // Update hint button appearance
+    const hintsUsed = window.gameManager?.hintsUsed || 0;
+    hintBtn.innerHTML = hintsUsed >= 5 
+      ? '<span class="btn-icon">💡</span> Show Solution' 
+      : `<span class="btn-icon">💡</span> Hint${hintsUsed > 0 ? ` (${hintsUsed}/5)` : ''}`;
+    
+    attachButtonListener(hintBtn, () => {
+      if (window.gameManager) {
+        window.gameManager.incrementHints();
+      }
+      
+      const currentHints = window.gameManager?.hintsUsed || 0;
+      let hintText = '';
+      let isSolution = false;
+      
+      if (currentHints > 5) {
+        hintText = getSolutionForLevel(level);
+        isSolution = true;
+      } else {
+        const hintIndex = Math.min(currentHints - 1, level.hints.length - 1);
+        hintText = level.hints[hintIndex];
+      }
+      
+      showHintModal(hintText, isSolution);
+      
+      // Update button text
+      hintBtn.innerHTML = currentHints >= 5 
+        ? '<span class="btn-icon">💡</span> Show Solution' 
+        : `<span class="btn-icon">💡</span> Hint (${currentHints}/5)`;
+    });
+  }
+  
+  /**
+   * Hint Modal - Display hints and solutions
+   */
+  function showHintModal(content, isSolution = false) {
+    log(`Showing ${isSolution ? 'solution' : 'hint'}`);
     
     let modal = getEl('hint-modal');
+    
+    // Create modal if it doesn't exist
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'hint-modal';
       modal.className = 'modal';
+      
       modal.innerHTML = `
         <div class="modal-content">
           <div class="modal-header">
-            <h2>${isSolution ? "🎯 Solution" : "💡 Hint"}</h2>
+            <h2>${isSolution ? '🎯 Solution' : '💡 Hint'}</h2>
           </div>
           <div class="modal-body">
-            <div class="hint-content"></div>
+            <div class="${isSolution ? 'solution-container' : 'hint-content'}"></div>
           </div>
           <div class="modal-actions">
             <button class="btn btn-primary close-hint">Got it!</button>
           </div>
         </div>
       `;
+      
       document.body.appendChild(modal);
-      
-      // Add close functionality
-      modal.querySelector('.close-hint').addEventListener('click', function() {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-      });
-      
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-          modal.classList.add('hidden');
-          modal.style.display = 'none';
-        }
-      });
     }
     
-    // Update content
-    const content = modal.querySelector('.hint-content');
-    if (isSolution) {
-      content.innerHTML = `
-        <div class="solution-container">
-          <p class="solution-intro">Here's the solution:</p>
-          <pre class="solution-code">${hint}</pre>
-          <p class="solution-note">Try to understand how it works!</p>
-        </div>
-      `;
-    } else {
-      content.textContent = hint;
-      content.className = 'hint-content';
+    // Update modal content
+    const headerTitle = modal.querySelector('.modal-header h2');
+    if (headerTitle) {
+      headerTitle.textContent = isSolution ? '🎯 Solution' : '💡 Hint';
+    }
+    
+    const contentDiv = modal.querySelector('.modal-body > div');
+    if (contentDiv) {
+      contentDiv.className = isSolution ? 'solution-container' : 'hint-content';
+      
+      if (isSolution) {
+        contentDiv.innerHTML = `
+          <p class="mb-2">Here's the solution:</p>
+          <pre class="solution-code">${content}</pre>
+          <p class="mb-0">Try to understand how it works before using it!</p>
+        `;
+      } else {
+        contentDiv.textContent = content;
+      }
     }
     
     // Show modal
     modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    
+    // Setup close button
+    const closeBtn = modal.querySelector('.close-hint');
+    if (closeBtn) {
+      attachButtonListener(closeBtn, () => {
+        modal.classList.add('hidden');
+      });
+    }
+    
+    // Close when clicking outside modal content
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
   }
-
-  // Get solution for level
+  
+  /**
+   * Get Solution - Return solution code for a level
+   */
   function getSolutionForLevel(level) {
+    if (!level) return "No solution available.";
+    
     const solutions = {
       1: 'print("Hello, Python World!")',
       2: 'print(15 + 25 * 2)',
@@ -556,36 +548,44 @@ const ui = (() => {
       5: 'name = input("What is your name? ")\nprint("Welcome, " + name + "!")',
       6: 'score = 85\nif score > 80:\n    print("Great job!")'
     };
-    return solutions[level.id] || "No solution available.";
+    
+    return solutions[level.id] || "Solution not available for this level.";
   }
-
-  // Show victory modal
+  
+  /**
+   * Victory Modal - Show completion feedback
+   */
   function showVictoryModal(stars, level, nextAction) {
     log(`Showing victory modal with ${stars} stars`);
-
+    
     let modal = getEl('victory-modal');
+    
+    // Create modal if it doesn't exist
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'victory-modal';
       modal.className = 'modal';
+      
       modal.innerHTML = `
         <div class="modal-content">
           <div class="modal-header">
             <h2>🎉 Level Complete!</h2>
           </div>
-          <div class="modal-body">
-            <div class="stars-display" id="victory-stars"></div>
-            <p>Great job! You completed Level ${level.id}!</p>
+          <div class="modal-body text-center">
+            <div class="stars-display" id="victory-stars" style="justify-content: center; font-size: 2rem;"></div>
+            <p class="mb-0">Great job! You completed Level ${level.id}!</p>
           </div>
           <div class="modal-actions">
-            <button class="btn btn-secondary" id="victory-repeat">🔄 Repeat</button>
-            <button class="btn btn-primary" id="victory-next">➡️ Continue</button>
+            <button id="victory-prev" class="btn btn-secondary">⬅️ Previous</button>
+            <button id="victory-repeat" class="btn btn-secondary">🔄 Repeat</button>
+            <button id="victory-next" class="btn btn-primary">➡️ Next</button>
           </div>
         </div>
       `;
+      
       document.body.appendChild(modal);
     }
-
+    
     // Update stars
     const starsContainer = modal.querySelector('#victory-stars');
     if (starsContainer) {
@@ -593,85 +593,146 @@ const ui = (() => {
         `<span>${i < stars ? '⭐' : '☆'}</span>`
       ).join('');
     }
-
-    // Setup buttons
+    
+    // Setup button functionality
+    const prevBtn = modal.querySelector('#victory-prev');
     const repeatBtn = modal.querySelector('#victory-repeat');
     const nextBtn = modal.querySelector('#victory-next');
-
-    if (repeatBtn) {
-      repeatBtn.onclick = () => {
+    
+    // Previous level button
+    if (prevBtn) {
+      const prevId = level.id - 1;
+      const hasPrev = prevId > 0 && window.gameManager?.playerProgress?.unlockedLevels?.includes(prevId);
+      
+      prevBtn.disabled = !hasPrev;
+      
+      attachButtonListener(prevBtn, () => {
         modal.classList.add('hidden');
-        modal.style.display = 'none';
+        if (hasPrev && window.gameManager) {
+          window.gameManager.startLevel(prevId);
+        }
+      });
+    }
+    
+    // Repeat level button
+    if (repeatBtn) {
+      attachButtonListener(repeatBtn, () => {
+        modal.classList.add('hidden');
         if (window.gameManager) {
           window.gameManager.startLevel(level.id);
         }
-      };
+      });
     }
-
+    
+    // Next level button
     if (nextBtn) {
-      nextBtn.onclick = () => {
+      const nextId = level.id + 1;
+      const hasNext = nextId <= window.gameLevels?.length;
+      
+      nextBtn.disabled = !hasNext;
+      
+      attachButtonListener(nextBtn, () => {
         modal.classList.add('hidden');
-        modal.style.display = 'none';
-        const nextLevel = level.id + 1;
-        if (nextLevel <= window.gameLevels?.length) {
-          if (window.gameManager) {
-            window.gameManager.startLevel(nextLevel);
-          }
-        } else {
-          showView('level-map');
+        if (hasNext && window.gameManager) {
+          window.gameManager.startLevel(nextId);
+        } else if (nextAction) {
+          nextAction();
         }
-      };
+      });
     }
-
+    
     // Show modal
     modal.classList.remove('hidden');
-    modal.style.display = 'flex';
   }
-
-  // Update progress display
+  
+  /**
+   * Progress Display - Update UI with completion stats
+   */
   function updateProgressDisplay() {
     if (!window.gameManager) return;
     
     const progress = window.gameManager.calculateProgress();
+    const stats = window.gameManager.getDetailedStats();
     
-    const progressText = getEl('progress-text');
+    // Update main progress text
+    const progressText = document.getElementById('progress-text');
     if (progressText) {
-      progressText.textContent = `${progress.completed}/${progress.total} levels completed (${progress.percentage}%)`;
+      progressText.innerHTML = `
+        ${progress.completed}/${progress.total} levels completed (${progress.percentage}%)<br>
+        <small style="opacity: 0.7;">⭐ ${progress.totalStars}/${progress.maxPossibleStars} stars earned</small>
+      `;
     }
     
-    const progressFill = getEl('progress-fill');
+    // Update progress bar
+    const progressFill = document.getElementById('progress-fill');
     if (progressFill) {
       progressFill.style.width = `${progress.percentage}%`;
     }
+    
+    // Log detailed stats for debugging
+    console.log('Progress Stats:', {
+      completed: progress.completed,
+      total: progress.total,
+      percentage: progress.percentage,
+      totalStars: progress.totalStars,
+      gamesPlayed: progress.gamesPlayed,
+      totalPlayTime: Math.round(stats.averagePlayTime / 1000) + 's'
+    });
   }
-
-  // Initialize UI
+  
+  /**
+   * Initialize UI System
+   */
+  function initializeUI() {
+    log("Initializing UI system");
+    
+    // Initialize navigation buttons
+    const navigationButtons = [
+      { id: 'start-game-btn', action: () => showView('level-map') },
+      { id: 'how-to-play-btn', action: () => showView('how-to-play') },
+      { id: 'back-to-menu-btn', action: () => showView('splash-screen') },
+      { id: 'level-map-to-menu-btn', action: () => showView('splash-screen') }
+    ];
+    
+    navigationButtons.forEach(button => {
+      const el = getEl(button.id);
+      if (el) attachButtonListener(el, button.action);
+    });
+    
+    // Initialize reset progress button
+    const resetBtn = getEl('reset-progress-btn');
+    if (resetBtn && window.gameManager) {
+      attachButtonListener(resetBtn, () => window.gameManager.resetProgress());
+    }
+    
+    log("UI system initialized");
+  }
+  
+  /**
+   * Main UI initialization
+   */
   function init() {
-    log("Initializing UI");
+    console.log("UI: Initializing");
     
-    // Initialize buttons after a short delay to ensure DOM is ready
-    setTimeout(() => {
-      initializeButtons();
-    }, 100);
-    
-    // Show initial view
+    // Show splash screen initially
     showView('splash-screen');
     
-    log("UI initialization complete");
+    console.log("UI: Initialization complete");
   }
-
+  
   // Public API
   return {
     init,
+    getEl,
     showView,
     loadLevelUI,
     updateLevelMap,
     showVictoryModal,
-    updateProgressDisplay,
-    attachButtonListener,
     showHintModal,
-    getSolutionForLevel
+    updateProgressDisplay,
+    attachButtonListener
   };
 })();
 
+// Expose to global scope
 window.ui = ui;
