@@ -1,57 +1,132 @@
-# Py-Champ 🐍🏆
+# PyChamp 🐍🏆
 
-A Python-powered browser-playable game brought to life via GitHub Pages.
+**Learn Python Programming Through Interactive Browser-Based Challenges**
 
-Play it now (Live Demo):
-➡️ https://cruze-tech.github.io/Py-Champ/
+### [🚀 Play PyChamp Live!](https://cruze-tech.github.io/Py-Champ/)
+
+![PyChamp Gameplay Screenshot](PyChamp.png)
 
 ---
 
 ## Table of Contents
-1. About the Project
-2. Live Demo
-3. Screenshots / Media
-4. Features
-5. Gameplay Overview
-6. Rules & Mechanics
-7. Controls
-8. Tech Stack
-9. Project Structure
-10. Getting Started (Local Development)
-11. Running Tests
-12. Architecture & Design Notes
-13. Data & State Management
-14. Performance Considerations
-15. Accessibility
-16. Deployment (GitHub Pages)
-17. Roadmap
-18. Contributing
-19. Troubleshooting
-20. FAQ
-21. License
-22. Acknowledgments
+1. [About the Project](#-about-the-project)
+2. [Live Demo](#-play-pychamp-live)
+3. [Features](#-key-features)
+4. [Gameplay Overview](#-gameplay-overview)
+5. [Rules & Mechanics](#-rules--mechanics)
+6. [Controls](#-controls)
+7. [Tech Stack](#%EF%B8%8F-tech-stack)
+8. [Project Structure](#-project-structure)
+9. [Getting Started (Local Development)](#-getting-started-local-development)
+10. [Architecture & Design Notes](#-architecture--design-notes)
+11. [Data & State Management](#-data--state-management)
+12. [Performance Considerations](#-performance-considerations)
+13. [Accessibility](#-accessibility)
+14. [Deployment (GitHub Pages)](#-deployment-github-pages)
+15. [Roadmap](#%EF%B8%8F-roadmap)
+16. [Contributing](#-contributing)
+17. [Troubleshooting](#%EF%B8%8F-troubleshooting)
+18. [FAQ](#-faq)
+19. [License](#-license)
+20. [Acknowledgments](#-acknowledgments)
 
 ---
 
-## 1. About the Project
-Py-Champ is a (briefly describe genre: e.g., arcade / puzzle / platform / strategy) game where players (goal—e.g., “guide the snake to collect tokens while avoiding obstacles”).  
-It was designed to be:
-- Lightweight and fast-loading
-- Easy to fork and extend
-- Educational (showcasing Python-to-web, or if pure JS, update accordingly)
+## 📖 About The Project
 
-> Replace this description with your game’s real narrative and core objective.
+PyChamp is an educational web game that teaches Python programming fundamentals through interactive coding challenges. Players write real Python code directly in their browser to solve puzzles, complete levels, and master programming concepts from basic syntax to variables and conditionals.
+
+**Why PyChamp?**
+- **Zero Setup**: No Python installation required - everything runs in your browser
+- **Hands-On Learning**: Write real Python code, not multiple choice questions  
+- **Gamified Experience**: Star ratings, level progression, and achievement tracking
+- **Instant Feedback**: See your code run immediately with detailed console output
 
 ---
 
-## 2. Live Demo
-The game is deployed via GitHub Pages:  
-https://cruze-tech.github.io/Py-Champ/
+## ✨ Key Features
 
-If the page doesn’t load:
-- Hard refresh (Ctrl+F5 / Cmd+Shift+R)
-- Check browser console for blocked scripts
-- Verify JavaScript is enabled
+- 🎯 **6 Progressive Levels** - From "Hello World" to conditional statements
+- ⚡ **Real Python Execution** - Powered by Pyodide (Python in WebAssembly)
+- 📝 **Professional Code Editor** - Syntax highlighting with CodeMirror
+- 💡 **Smart Hint System** - Get help when stuck, view solutions when needed
+- ⭐ **Star Rating System** - Perfect (3⭐), Good (2⭐), Okay (1⭐) based on hints used
+- 💾 **Progress Tracking** - Automatic save to localStorage with detailed statistics
+- 📱 **Fully Responsive** - Works seamlessly on desktop, tablet, and mobile
+- 🎨 **Modern UI** - Clean, dark theme with professional game aesthetics
+- 🔧 **Modular Architecture** - Clean separation of concerns for maintainability
+
+---
+
+## 🎮 Gameplay Overview
+
+**Objective**: Complete Python coding challenges by writing real code that produces the expected output.
+
+**Win Condition**: Your code output matches the level's expected result exactly.
+
+**Progression**: Linear level progression - complete Level N to unlock Level N+1.
+
+### How to Play
+1. **Start the Game** - Visit the live link and click "🚀 Start Game"
+2. **Choose a Level** - Select from unlocked levels on the level map
+3. **Read the Challenge** - Each level has a guide NPC and clear instructions
+4. **Write Python Code** - Use the built-in editor with syntax highlighting
+5. **Run & Test** - Execute your code and see real-time output
+6. **Complete Levels** - Match expected output to earn stars and unlock new levels
+
+### Level Progression
+- **Level 1**: Hello World - Basic print statements
+- **Level 2**: Math Operations - Arithmetic and calculations  
+- **Level 3**: Variables - Storing and using data
+- **Level 4**: String Operations - Working with text
+- **Level 5**: User Input - Interactive programs
+- **Level 6**: Conditionals - If statements and logic
+
+---
+
+## 🎯 Rules & Mechanics
+
+| Element | Description |
+|---------|-------------|
+| **Code Editor** | Write Python code with syntax highlighting and auto-indentation |
+| **Console Output** | Real-time execution results and error messages |
+| **Hints** | Progressive help system (5 hints max, then solution revealed) |
+| **Star Rating** | 3⭐ (no hints), 2⭐ (1-2 hints), 1⭐ (3+ hints) |
+| **Progress Tracking** | Completed levels, attempts, best times, total hints used |
+| **Level Unlocking** | Sequential unlock system - complete previous to access next |
+
+---
+
+## 🎮 Controls
+
+| Action | Input Method |
+|--------|-------------|
+| **Code Writing** | Keyboard typing in code editor |
+| **Execute Code** | Click "▶️ Run" button |
+| **Get Hint** | Click "💡 Hint" button |
+| **Navigate Levels** | Click level cards on level map |
+| **Menu Navigation** | Click navigation buttons |
+| **Modal Actions** | Click modal buttons (Retry, Next Level, Level Map) |
+
+**Mobile Controls:**
+- Touch typing with virtual keyboard
+- Tap buttons for all actions
+- Swipe-friendly modal interactions
+
+---
+
+## 🛠️ Tech Stack
+
+**Frontend Technologies:**
+- HTML5, CSS3, JavaScript (ES6+)
+- CSS Grid & Flexbox for responsive layouts
+- CSS Custom Properties for theming
+
+**Core Libraries:**
+- **[Pyodide](https://pyodide.org/)** - Python scientific stack in WebAssembly
+- **[CodeMirror 5](https://codemirror.net/)** - In-browser code editor with Python syntax highlighting
+
+**No Backend Required** - Entirely client-side application
 
 ---
 
@@ -67,69 +142,6 @@ Add images to a folder like: `assets/screenshots/` and reference them:
 ```
 
 If you have an animated GIF, include it near the top for visual appeal.
-
----
-
-## 4. Features
-- 🎮 Interactive game loop
-- 🧠 (AI / random / deterministic) enemy or obstacle behavior
-- ⏱️ Real-time scoring / timer
-- 💾 (Optional) persistent highscores (localStorage / JSON / server)
-- 📱 Responsive layout (desktop / mobile)
-- ♿ Planned accessibility improvements (keyboard-only play, ARIA labels)
-- 🔧 Modular code organization for extendability
-
----
-
-## 5. Gameplay Overview
-Brief explanation:
-- Objective: ...
-- Win Condition: ...
-- Lose Condition: ...
-- Progression: levels / rounds / endless mode
-
----
-
-## 6. Rules & Mechanics
-| Element | Description |
-|---------|-------------|
-| Player | ... |
-| Obstacles | ... |
-| Power-ups | ... |
-| Scoring | e.g., +10 per item |
-| Difficulty scaling | e.g., speed increases every 30s |
-| Lives / Health | ... |
-
-Update this table to reflect actual mechanics.
-
----
-
-## 7. Controls
-| Action | Key / Input |
-|--------|-------------|
-| Move Up | Arrow Up / W |
-| Move Down | Arrow Down / S |
-| Move Left | Arrow Left / A |
-| Move Right | Arrow Right / D |
-| Pause | P |
-| Restart | R |
-
-Adjust for touch controls if implemented:
-- Swipe gestures (document if available)
-
----
-
-## 8. Tech Stack
-Core:
-- HTML5 Canvas (or DOM-based rendering)
-- JavaScript (ES6+) or Transpiled Python via (e.g., Brython / PyScript) — clarify actual method
-- CSS (custom / Tailwind / etc.)
-
-Tooling (if applicable):
-- Bundler: (Vite / Webpack / None)
-- Linting: ESLint
-- Formatting: Prettier
-- Testing: Jest / PyTest (if backend or Python logic)
 
 ---
 

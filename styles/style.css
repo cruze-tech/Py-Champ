@@ -8,6 +8,8 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* Enhanced cross-browser support */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* CSS Variables */
@@ -99,7 +101,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Layout System */
+/* Layout System with Safe Area Support */
 .view-container {
   width: 100%;
   max-width: 1400px;
@@ -108,6 +110,11 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  /* Safe area support */
+  padding-left: max(var(--space-6), env(safe-area-inset-left));
+  padding-right: max(var(--space-6), env(safe-area-inset-right));
+  padding-top: max(var(--space-6), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
 }
 
 .view-container.hidden {
@@ -168,7 +175,7 @@ body {
   align-items: center;
 }
 
-/* Button System */
+/* Enhanced Button System */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -186,9 +193,26 @@ body {
   outline: none;
   transition: all var(--transition-fast);
   font-family: var(--font-main);
-  min-height: 44px;
+  min-height: 48px; /* Increased from 44px */
+  min-width: 48px;
   user-select: none;
   box-shadow: var(--shadow-sm);
+  /* Enhanced cross-browser support */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  touch-action: manipulation;
+}
+
+/* Fix for Firefox button styling */
+.btn::-moz-focus-inner {
+  border: 0;
+  padding: 0;
 }
 
 .btn:hover:not(:disabled) {
@@ -341,12 +365,14 @@ body {
   100% { transform: translateX(100%); }
 }
 
-/* Level Map */
+/* Enhanced Level Map */
 .level-map-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-6);
   padding: var(--space-2) 0;
+  /* Container queries support */
+  container-type: inline-size;
 }
 
 .level-card {
@@ -494,7 +520,7 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* Code Editor */
+/* Enhanced Code Editor */
 .editor-container {
   flex: 1;
   min-height: 250px;
@@ -503,6 +529,7 @@ body {
   border-radius: var(--radius-md);
   overflow: hidden;
   font-family: var(--font-mono);
+  touch-action: manipulation;
 }
 
 .CodeMirror {
@@ -588,7 +615,7 @@ body {
 
 .howto-content p {
   margin-bottom: var(--space-4);
-  color: var(--color-text-secondary);
+  color: var (--color-text-secondary);
 }
 
 .howto-content ol {
@@ -601,7 +628,7 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* Modal System */
+/* Enhanced Modal System */
 .modal {
   position: fixed;
   top: 0;
@@ -617,6 +644,11 @@ body {
   opacity: 1;
   visibility: visible;
   transition: all var(--transition-normal);
+  padding: var(--space-4);
+  box-sizing: border-box;
+  /* Safe area support */
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
 }
 
 .modal.hidden {
@@ -630,12 +662,12 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-xl);
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
+  width: min(90vw, 500px);
+  max-height: min(80vh, 600px);
   overflow-y: auto;
   transform: scale(1);
   transition: transform var(--transition-normal);
+  margin: auto;
 }
 
 .modal.hidden .modal-content {
@@ -713,17 +745,95 @@ body {
 .mb-4 { margin-bottom: var(--space-4) !important; }
 .mt-4 { margin-top: var(--space-4) !important; }
 
-/* Responsive Design */
+/* Fallback textarea styling for iOS input zoom prevention */
+input, textarea, select {
+  font-size: 16px;
+}
+
+/* Container Queries (Future-Proof) */
+@supports (container-type: inline-size) {
+  @container (max-width: 600px) {
+    .level-card {
+      padding: var(--space-4);
+    }
+    
+    .level-card h4 {
+      font-size: 1rem;
+    }
+  }
+}
+
+/* Hover states only for non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .level-card:not(.locked):hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--color-primary);
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .btn:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  .level-card:hover {
+    transform: none;
+  }
+  
+  /* Add active states for touch feedback */
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 1440px) {
+  .view-container {
+    max-width: 1200px;
+  }
+}
+
 @media (max-width: 1200px) {
   .level-map-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-4);
+  }
+}
+
+@media (max-width: 1024px) {
+  .level-map-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  .gameplay-row {
+    gap: var(--space-3);
+  }
+}
+
+/* Tablet Portrait */
+@media (max-width: 768px) and (orientation: portrait) {
+  .modal-content {
+    width: min(95vw, 450px);
+    max-height: 85vh;
   }
 }
 
 @media (max-width: 768px) {
   .view-container {
     padding: var(--space-4);
+    /* Safe area support for tablets */
+    padding-left: max(var(--space-4), env(safe-area-inset-left));
+    padding-right: max(var(--space-4), env(safe-area-inset-right));
+    padding-top: max(var(--space-4), env(safe-area-inset-top));
+    padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
   }
   
   .gameplay-row {
@@ -751,7 +861,22 @@ body {
     justify-content: center;
   }
   
+  .modal-content {
+    width: min(95vw, 450px);
+    max-height: 90vh;
+  }
+  
+  .modal-header {
+    padding: var(--space-4);
+  }
+  
+  .modal-body {
+    padding: var(--space-4);
+  }
+  
   .modal-actions {
+    padding: var(--space-4);
+    gap: var(--space-2);
     flex-direction: column;
   }
   
@@ -766,9 +891,45 @@ body {
   .tagline {
     font-size: 1rem;
   }
+  
+  .editor-container {
+    min-height: 180px;
+  }
+  
+  .CodeMirror {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    line-height: 1.4 !important;
+  }
+  
+  .btn:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  
+  /* Fix for iOS input zoom */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Large phones */
+@media (max-width: 640px) {
+  .brand {
+    font-size: clamp(1.8rem, 10vw, 2.5rem);
+  }
+  
+  .panel-header h3 {
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
+  :root {
+    --space-6: 16px;
+    --space-4: 12px;
+    --space-3: 8px;
+  }
+  
   .view-container {
     padding: var(--space-3);
   }
@@ -778,9 +939,15 @@ body {
   }
   
   .btn {
+    min-height: 52px; /* Even larger on small screens */
+    font-size: 1rem; /* Slightly larger text */
     padding: var(--space-2) var(--space-4);
-    font-size: 0.875rem;
-    min-height: 40px;
+  }
+  
+  /* Larger touch targets for game controls */
+  #run-btn, #hint-btn {
+    min-height: 56px;
+    font-size: 1.1rem;
   }
   
   .gameplay-layout {
@@ -789,16 +956,75 @@ body {
   
   .editor-container,
   .console-output {
-    min-height: 200px;
+    min-height: 160px;
+  }
+  
+  .CodeMirror {
+    font-size: 14px !important;
+  }
+  
+  /* Fallback textarea styling */
+  .editor-container textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    line-height: 1.4;
+    resize: vertical;
+    min-height: 160px;
   }
   
   .modal-content {
-    width: 95%;
-    margin: var(--space-4);
+    width: min(98vw, 400px);
+    margin: var(--space-2);
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+    margin-bottom: var(--space-2);
   }
   
   .scene-container {
     min-height: 120px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 360px) {
+  :root {
+    --space-6: 16px;
+    --space-4: 12px;
+    --space-3: 8px;
+  }
+  
+  .view-container {
+    padding: var(--space-2);
+  }
+  
+  .modal-content {
+    width: 98%;
+    margin: var(--space-2);
+  }
+}
+
+/* Landscape Orientation Optimizations */
+@media (max-height: 500px) and (orientation: landscape) {
+  .splash-inner {
+    min-height: 70vh;
+  }
+  
+  .brand {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+    margin-bottom: var(--space-2);
+  }
+  
+  .overall-progress {
+    margin: var(--space-4) 0;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .gameplay-layout {
+    min-height: 60vh;
   }
 }
 
@@ -832,5 +1058,17 @@ body {
   
   .progress-fill::after {
     animation: none;
+  }
+  
+  .btn:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  .level-card:hover {
+    transform: none;
+  }
+  
+  .modal-content {
+    transition: none;
   }
 }
