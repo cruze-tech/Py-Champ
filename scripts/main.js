@@ -196,31 +196,31 @@ const gameManager = (() => {
 
   function handleLevelSuccess() {
     if (!currentLevel || !levelStartTime) {
-      log('No current level for success handler');
+      console.error('No current level or start time for success handler');
       return false;
     }
-
+  
     const levelId = currentLevel.id;
     const completionTime = Date.now() - levelStartTime;
     const hintsUsed = currentLevelHints;
-
+  
     // Calculate stars based on hints used
     let stars = 3; // Perfect
     if (hintsUsed >= 1 && hintsUsed < 3) stars = 2; // Good
     if (hintsUsed >= 3) stars = 1; // Okay
-
-    log(`Level ${levelId} completed: ${stars} stars, ${hintsUsed} hints, ${Math.round(completionTime/1000)}s`);
-
+  
+    console.log(`🎉 Level ${levelId} SUCCESS: ${stars} stars, ${hintsUsed} hints, ${Math.round(completionTime/1000)}s`);
+  
     // Update completion status
     if (!playerProgress.completedLevels.includes(levelId)) {
       playerProgress.completedLevels.push(levelId);
     }
-
+  
     // Update best score (keep highest star count)
     const currentBest = playerProgress.levelScores[levelId] || 0;
     playerProgress.levelScores[levelId] = Math.max(stars, currentBest);
-
-    // BUG FIX: Ensure stats object exists before accessing
+  
+    // Ensure stats object exists
     if (!playerProgress.levelStats[levelId]) {
       playerProgress.levelStats[levelId] = {
         attempts: 0,
@@ -229,70 +229,58 @@ const gameManager = (() => {
         firstCompleted: null
       };
     }
-
+  
     // Update level stats
     const stats = playerProgress.levelStats[levelId];
-    if (!stats.firstCompleted) {
+    const isFirstCompletion = !stats.firstCompleted;
+    
+    if (isFirstCompletion) {
       stats.firstCompleted = Date.now();
     }
-    // BUG FIX: Only update best time if it's better or first completion
-    if (!stats.bestTime || completionTime < stats.bestTime) {
+    
+    // Update best time
+    const isNewRecord = !stats.bestTime || completionTime < stats.bestTime;
+    if (isNewRecord) {
       stats.bestTime = completionTime;
     }
-
+  
     // Unlock next level
     const nextLevelId = levelId + 1;
     const maxLevels = window.gameLevels?.length || 6;
     
     if (nextLevelId <= maxLevels && !playerProgress.unlockedLevels.includes(nextLevelId)) {
       playerProgress.unlockedLevels.push(nextLevelId);
-      log(`Unlocked level ${nextLevelId}`);
+      console.log(`🔓 Unlocked level ${nextLevelId}`);
     }
-
+  
     // Add completion time to total
     playerProgress.totalPlayTime += completionTime;
-
+  
     // Save progress
     saveProgress();
-
-    // Show victory modal
+    console.log('Progress saved after level completion');
+  
+    // Prepare completion data
+    const completionData = {
+      hintsUsed,
+      completionTime,
+      isNewRecord,
+      isFirstCompletion,
+      levelId,
+      stars
+    };
+  
+    // Show victory modal immediately
     if (window.ui && window.ui.showVictoryModal) {
-      const nextAction = () => {
-        if (nextLevelId <= maxLevels) {
-          // BUG FIX: Better UX - show option dialog instead of confirm
-          const userChoice = confirm('Ready for the next level?\n\nClick OK to continue to the next level\nClick Cancel to return to level map');
-          if (userChoice) {
-            startLevel(nextLevelId);
-          } else {
-            window.ui.showView('level-map');
-          }
-        } else {
-          // All levels completed!
-          alert('🎉 Congratulations! You\'ve completed all levels!\n\nYou are now a Python Champion!');
-          window.ui.showView('level-map');
-        }
-      };
-
-      // BUG FIX: Pass correct completion data
-      const completionData = {
-        hintsUsed,
-        completionTime,
-        isNewRecord: !stats.bestTime || completionTime <= stats.bestTime,
-        isFirstCompletion: stats.attempts === 1, // BUG FIX: Check if this is first attempt
-        levelId,
-        stars
-      };
-
-      setTimeout(() => {
-        window.ui.showVictoryModal(stars, currentLevel, nextAction, completionData);
-      }, 500);
+      console.log('Showing victory modal...');
+      window.ui.showVictoryModal(stars, currentLevel, null, completionData);
+    } else {
+      console.error('UI.showVictoryModal not available!');
+      // Fallback - show simple alert and go to level map
+      alert(`🎉 Level ${levelId} completed with ${stars} stars!`);
+      if (window.ui) window.ui.showView('level-map');
     }
-
-    // BUG FIX: Reset current level data after completion
-    currentLevel = null;
-    levelStartTime = null;
-    currentLevelHints = 0;
-
+  
     return true;
   }
 
