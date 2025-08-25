@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PyChamp - Learn Python Through Interactive Challenges</title>
     
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M083SBLZNY"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-M083SBLZNY');
+    </script>
+    
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
     
@@ -40,6 +50,12 @@
                 <button id="reset-progress-btn" class="btn btn-warning">🔄 Reset Progress</button>
             </div>
         </div>
+        
+        <!-- Ad Banner - Bottom of Splash Screen Only -->
+        <div id="frame" style="width: 100%;margin: auto;background: rgba(0, 0, 0, 0.50);position: relative; z-index: 99998;">
+            <iframe data-aa='2407893' src='//acceptable.a-ads.com/2407893/?size=Adaptive'
+                              style='border:0; padding:0; width:70%; height:auto; overflow:hidden;display: block;margin: auto'></iframe>
+        </div>
     </div>
 
     <!-- Level Map -->
@@ -57,6 +73,44 @@
         </div>
     </div>
 
+    <!-- How to Play View -->
+    <div id="how-to-play" class="view-container hidden">
+        <div class="panel">
+            <div class="panel-header">
+                <h3>❓ How to Play PyChamp</h3>
+            </div>
+            <div class="panel-body">
+                <div class="howto-content">
+                    <h4>🎯 Objective</h4>
+                    <p>Learn Python programming through interactive challenges and solve coding puzzles to progress through levels.</p>
+                    
+                    <h4>🎮 How to Play</h4>
+                    <ol>
+                        <li>Read the story and instructions for each level</li>
+                        <li>Write Python code in the editor to solve the challenge</li>
+                        <li>Click "Run Code" to execute your solution</li>
+                        <li>Check the console for output and feedback</li>
+                        <li>Complete the objective to unlock the next level</li>
+                    </ol>
+                    
+                    <h4>💡 Tips</h4>
+                    <ol>
+                        <li>Use the hint button if you get stuck</li>
+                        <li>Read error messages carefully - they help you debug</li>
+                        <li>Experiment with different approaches</li>
+                        <li>Don't be afraid to make mistakes - that's how you learn!</li>
+                    </ol>
+                    
+                    <h4>⭐ Scoring</h4>
+                    <p>You earn stars based on how efficiently you solve each challenge. Try to write clean, correct code to get the highest score!</p>
+                </div>
+            </div>
+            <div class="panel-footer">
+                <button id="howto-back-btn" class="btn btn-secondary">🏠 Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Gameplay View -->
     <div id="gameplay" class="view-container hidden">
         <div class="panel">
@@ -64,51 +118,68 @@
                 <h3 id="level-title" class="level-title">Level 1</h3>
                 <div class="panel-actions">
                     <button id="hint-btn" class="btn btn-secondary">💡 Hint</button>
-                    <button id="back-to-menu-btn" class="btn btn-warning">🏠 Menu</button>
+                    <button id="back-to-menu-btn" class="btn btn-warning">🗺️ Level Map</button>
                 </div>
             </div>
             <div class="panel-body">
                 <div class="gameplay-layout">
                     <!-- Scene and Dialogue Row -->
                     <div class="gameplay-row">
-                        <div class="panel scene-panel">
+                        <!-- Scene Panel -->
+                        <div class="scene-panel panel">
                             <div class="panel-header">
-                                <h3>🎭 Scene</h3>
+                                <h3>🎬 Scene</h3>
                             </div>
                             <div class="panel-body">
-                                <div id="scene-container" class="scene-container"></div>
+                                <div id="scene-container" class="scene-container">
+                                    <div id="scene-content">Click "Start Game" to begin your adventure!</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="panel dialogue-panel">
+                        
+                        <!-- Dialogue Panel -->
+                        <div class="dialogue-panel panel">
                             <div class="panel-header">
-                                <h3>💬 Guide</h3>
+                                <h3>💬 Story</h3>
                             </div>
                             <div class="panel-body">
-                                <div id="npc-dialogue" class="dialogue-content"></div>
-                                <div id="instructions" class="instructions-content"></div>
+                                <div id="npc-dialogue" class="dialogue-content">
+                                    Welcome to PyChamp! Get ready to learn Python through interactive challenges.
+                                </div>
+                                <div id="instructions" class="instructions-content">
+                                    Instructions will appear here for each level.
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Editor and Console Row -->
                     <div class="gameplay-row">
-                        <div class="panel editor-panel">
+                        <!-- Editor Panel -->
+                        <div class="editor-panel panel">
                             <div class="panel-header">
                                 <h3>📝 Code Editor</h3>
                                 <div class="panel-actions">
-                                    <button id="run-btn" class="btn btn-primary">▶️ Run</button>
+                                    <button id="run-btn" class="btn btn-success">▶️ Run Code</button>
                                 </div>
                             </div>
                             <div class="panel-body">
-                                <div id="editor-container" class="editor-container"></div>
+                                <div id="editor-container" class="editor-container">
+                                    <textarea id="code-editor" placeholder="Write your Python code here..."></textarea>
+                                </div>
                             </div>
                         </div>
-                        <div class="panel console-panel">
+                        
+                        <!-- Console Panel -->
+                        <div class="console-panel panel">
                             <div class="panel-header">
-                                <h3>📊 Console</h3>
+                                <h3>🖥️ Console</h3>
+                                <div class="panel-actions">
+                                    <button id="clear-console-btn" class="btn btn-warning">🗑️ Clear</button>
+                                </div>
                             </div>
                             <div class="panel-body">
-                                <div id="console-output" class="console-output"></div>
+                                <div id="console-output" class="console-output">Console output will appear here...</div>
                             </div>
                         </div>
                     </div>
@@ -117,40 +188,12 @@
         </div>
     </div>
 
-    <!-- How to Play -->
-    <div id="how-to-play" class="view-container hidden">
-        <div class="panel">
-            <div class="panel-header">
-                <h3>❓ How to Play</h3>
-                <button id="howto-back-btn" class="btn btn-secondary">🏠 Back</button>
-            </div>
-            <div class="panel-body">
-                <div class="howto-content">
-                    <h4>🎯 Your Mission</h4>
-                    <p>Learn Python by solving interactive coding challenges. Each level teaches new concepts!</p>
-                    
-                    <h4>🎮 How to Play</h4>
-                    <ol>
-                        <li>Read the challenge instructions</li>
-                        <li>Write Python code in the editor</li>
-                        <li>Click "Run" to test your code</li>
-                        <li>Use hints if you get stuck</li>
-                    </ol>
-                    
-                    <h4>⭐ Scoring</h4>
-                    <p>⭐⭐⭐ Perfect (No hints) | ⭐⭐☆ Great (1-2 hints) | ⭐☆☆ Good (3+ hints)</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts in correct order - FIXED REFERENCES -->
+    <!-- Scripts - Load in correct order -->
     <script src="scripts/svg-assets.js"></script>
     <script src="scripts/game-levels.js"></script>
     <script src="scripts/pyodide-runner.js"></script>
     <script src="scripts/editor.js"></script>
     <script src="scripts/ui.js"></script>
     <script src="scripts/main.js"></script>
-    <!-- Removed levelManager.js - it's redundant -->
 </body>
 </html>
