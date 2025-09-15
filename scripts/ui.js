@@ -16,34 +16,32 @@ const ui = (() => {
    * Button Management - Reliable event handling
    */
   function attachButtonListener(element, handler) {
-    // Handle both element objects and ID strings
     if (typeof element === 'string') {
       element = getEl(element);
     }
-    
     if (!element || !handler) return;
-    
-    // Clone to remove existing listeners
-    const newElement = element.cloneNode(true);
-    if (element.parentNode) {
-      element.parentNode.replaceChild(newElement, element);
-    }
-    
-    // Attach new listener with error handling
-    newElement.addEventListener('click', function(e) {
+
+    // Remove previous listeners (if any)
+    element.onclick = null;
+    element.removeEventListener('click', handler);
+
+    // Use passive event for touch devices
+    element.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      
-      log(`Button clicked: ${newElement.id || newElement.className}`);
-      
+      log(`Button clicked: ${element.id || element.className}`);
       try {
         handler(e);
       } catch (error) {
         console.error("Button handler error:", error);
       }
-    });
-    
-    return newElement;
+    }, { passive: true });
+
+    // Enable button immediately
+    element.disabled = false;
+    element.style.pointerEvents = 'auto';
+
+    return element;
   }
   
   /**
@@ -151,6 +149,11 @@ const ui = (() => {
       }
     });
   
+    document.querySelectorAll('.play-level-btn').forEach(btn => {
+      btn.disabled = false;
+      btn.style.pointerEvents = 'auto';
+    });
+  
     console.log(`UI: Created ${window.gameLevels.length} level cards`);
   
     // Update progress display
@@ -191,6 +194,13 @@ const ui = (() => {
     if (scene) {
       if (window.SVGAssets && level.scene && window.SVGAssets[level.scene]) {
         scene.innerHTML = window.SVGAssets[level.scene];
+        // Force SVG to resize on mobile
+        const svg = scene.querySelector('svg');
+        if (svg) {
+          svg.style.width = '100%';
+          svg.style.height = 'auto';
+          svg.style.display = 'block';
+        }
       } else {
         scene.innerHTML = `
           <div style="text-align: center; color: #94a3b8;">
@@ -283,7 +293,7 @@ const ui = (() => {
                 // Level not completed - show what went wrong
                 const expectedOutput = level.expectedOutput ? level.expectedOutput.trim() : '';
                 const userOutput = result.output ? result.output.trim() : '';
-                
+                 
                 consoleOutput.innerHTML += `<span class="log-error">🤔 Not quite right...</span>\n`;
                 if (expectedOutput) {
                   consoleOutput.innerHTML += `<span class="log-error">Expected: "${expectedOutput}"</span>\n`;
@@ -343,7 +353,7 @@ const ui = (() => {
         }
         
         showHintModal(hintMessage, currentHints > 5);
-        
+           
         // Update hint button text
         this.textContent = currentHints >= 5 ? "💡 Show Solution" : `💡 Hint (${currentHints}/5)`;
       });
@@ -383,7 +393,7 @@ const ui = (() => {
     return userOutput === expectedOutput;
   }
 
-  /**
+  /***
    * Hint Modal - Display hints and solutions
    */
   function showHintModal(content, isSolution = false) {
@@ -445,7 +455,7 @@ const ui = (() => {
         modal.classList.add('hidden');
       });
     }
-    
+     
     // Close when clicking outside modal content
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -472,7 +482,7 @@ const ui = (() => {
     return solutions[level.id] || "Solution not available for this level.";
   }
   
-  /**
+  /***
    * Victory Modal - Show completion feedback
    */
   function showVictoryModal(stars, level, nextAction, completionData) {

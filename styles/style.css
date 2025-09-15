@@ -498,6 +498,9 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .dialogue-content,
@@ -853,7 +856,7 @@ input, textarea, select {
   .panel-header {
     padding: var(--space-3) var(--space-4);
     flex-direction: column;
-    gap: var(--space-3);
+    gap: var (--space-3);
     align-items: stretch;
   }
   
@@ -909,6 +912,17 @@ input, textarea, select {
   /* Fix for iOS input zoom */
   input, textarea, select {
     font-size: 16px !important;
+  }
+  
+  .scene-container {
+    min-height: 120px;
+    padding: 0;
+  }
+  
+  .scene-container svg {
+    min-height: 100px;
+    height: 100px;
+    max-height: 160px;
   }
 }
 
